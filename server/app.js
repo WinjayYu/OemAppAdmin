@@ -73,8 +73,8 @@ app.use(
   })
 );
 
-app.listen(4000, () => {
-  console.log('Koa is served at http://localhost:4000');
+app.listen(4001, () => {
+  console.log('Koa is served at http://localhost:4001');
 });
 
 export default app;

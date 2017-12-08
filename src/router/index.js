@@ -30,7 +30,7 @@ Vue.use(Router);
   * redirect : if `redirect:noredirect` will not redirct in the levelbar
   * noDropdown : if `noDropdown:true` will not has submenu in the sidebar
   * meta : `{ role: ['admin'] }`  will control the page role
-  **/
+  * */
 export const constantRouterMap = [
   { path: '/login', component: Login, hidden: true },
   { path: '/404', component: Err404, hidden: true },
