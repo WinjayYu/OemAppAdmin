@@ -49,6 +49,9 @@ router.afterEach(() => {
   NProgress.done();
 });
 
+Vue.config.debug = true;
+Vue.config.devtools = true;
+
 new Vue({
   el: '#app',
   router,

@@ -1,6 +1,7 @@
 const mysql = require('mysql2/promise');
 const config = global.config;
-const logger = require('../common/logger')
+const logger = require('../common/logger');
+const _ = require('lodash');
 const pool = mysql.createPool({
   host: config.DB.host,
   user: config.DB.user,
@@ -10,7 +11,7 @@ const pool = mysql.createPool({
 
 async function executeQuery(sql) {
   try {
-    const [rows] = await pool.query(sql);
+    let [rows] = await pool.query(sql);
     return rows;
   }catch(e) {
     logger.error.error(e);
@@ -24,7 +25,7 @@ const appList = async () => {
 };
 
 const userList = async () => {
-  const res = await executeQuery('SELECT * FROM `t_user` WHERE expiry_time > NOW()');
+  const res = await executeQuery('SELECT a.id, a.phone, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime FROM `t_user` a WHERE expiry_time > CURDATE()');
   return res;
 };
 
@@ -41,8 +42,8 @@ LEFT JOIN (
 			'[',
 			GROUP_CONCAT(
 				'{',
-				concat('"name":"', b.name, '"'),
-				concat(',"icon":"', b.icon, '"'),
+				CONCAT('"name":"', b.name, '"'),
+				CONCAT(',"icon":"', b.icon, '"'),
 				'}'
 			),
 			']'
@@ -56,15 +57,36 @@ LEFT JOIN (
 
   // res.array = JSON.parse(res.array);
   res = res.map((item) => {
-    item.array = JSON.parse(item.array);
+    if(!item.array) {
+      item.array = item.array === null ? '' : item.array;
+    } else {
+      item.array = JSON.parse(item.array);
+    }
     return item;
   });
   return res;
-}
+};
+
+const userUpdate = async (item) => {
+console.log('item', item);
+  let res = await executeQuery(
+    `UPDATE t_user
+    SET phone = '${item.phone}', des = '${item.des}', update_time = '${item.updateTime}',  expiry_time = '${item.expiryTime}'
+    WHERE
+    id = ${item.id}`
+  );
+
+  if(res) {
+    return {iRet: 0, res};
+  } else {
+    return {iRet: -1}
+  }
+};
 
 export default {
   appList,
   userList,
-  groupList
+  groupList,
+  userUpdate
 }
 

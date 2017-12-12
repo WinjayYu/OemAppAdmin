@@ -12,8 +12,18 @@ const getUserInfo = () => {
   return yFetch('/user', 'GET');
 };
 
+const getUserList = () => {
+  return yFetch('/user/userList', 'GET');
+};
+
+const userUpdate = (data) => {
+  return yFetch('/user/userUpdate', 'POST', data);
+}
+
 export {
   postLogin,
   postLogout,
-  getUserInfo
+  getUserInfo,
+  getUserList,
+  userUpdate
 };

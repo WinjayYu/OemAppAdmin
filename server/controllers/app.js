@@ -16,8 +16,15 @@ const groupList = async (ctx) => {
   ctx.body = res;
 }
 
+const userUpdate = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.userUpdate(item);
+  ctx.body = res;
+}
+
 export default {
   appList,
   userList,
-  groupList
+  groupList,
+  userUpdate
 }

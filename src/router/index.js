@@ -21,6 +21,7 @@ const Err404 = _import('404');
 /* demo page */
 const Form = _import('page/form');
 const Table = _import('table/index');
+const UserList  = _import('page/userList');
 
 Vue.use(Router);
 
@@ -70,6 +71,36 @@ export const asyncRouterMap = [
     icon: 'tubiaoleixingzhengchang',
     noDropdown: true,
     children: [{ path: 'index', component: Table, name: 'Table', meta: { role: ['admin'] } }]
+  },
+
+  {
+    path: '/user',
+    component: Layout,
+    redirect: '/user/userList',
+    name: '用户',
+    meta: {
+      title: '用户',
+      icon: 'zujian'
+    },
+    noDropdown: true,
+    children: [
+      {path: 'userList', component: UserList, name: '用户列表', meta: {title: '用户列表'}}
+    ]
+  },
+
+  {
+    path: '/app',
+    component: Layout,
+    redirect: '/app/appList',
+    name: 'app',
+    meta: {
+      title: 'app',
+      icon: 'zujian'
+    },
+    noDropdown: true,
+    children: [
+      {path: 'appList', component: UserList, name: 'app列表', meta: {title: 'app列表'}}
+    ]
   },
 
   { path: '*', redirect: '/404', hidden: true }

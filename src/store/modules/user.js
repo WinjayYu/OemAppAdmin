@@ -1,6 +1,7 @@
 /* eslint no-param-reassign:0 */
-import { postLogin, postLogout, getUserInfo } from '@/api/user';
+import { postLogin, postLogout, getUserInfo, getUserList, userUpdate } from '@/api/user';
 import Cookies from 'js-cookie';
+import _ from 'lodash';
 
 const user = {
   state: {
@@ -11,7 +12,8 @@ const user = {
       name: '',
       avatar: '',
       roles: []
-    }
+    },
+    userList: [],
   },
 
   mutations: {
@@ -20,7 +22,13 @@ const user = {
     },
     SET_USER_INFO: (state, userInfo) => {
       state.userInfo = userInfo;
-    }
+    },
+    SET_USER_LIST: (state, userList) => {
+      state.userList = userList;
+    },
+    // SET_USER_UPDATE: (state, userUpdate) => {
+    //   console.log('state', state);
+    // }
   },
 
   actions: {
@@ -74,6 +82,27 @@ const user = {
         Cookies.remove('Admin-Token');
         resolve();
       });
+    },
+
+    getUserList({commit, state}) {
+     return new Promise((resolve, reject) => {
+       getUserList().then((res) => {
+         commit('SET_USER_LIST', res);
+         resolve(res);
+       }).catch(err => {
+         reject(err);
+       })
+     })
+    },
+
+    userUpdate({commit}, userUpdateData) {
+      return new Promise((resolve, reject) => {
+        userUpdate(userUpdateData).then((res) => {
+          resolve(res);
+        }).catch(err => {
+          reject(err);
+        })
+      })
     }
   }
 };

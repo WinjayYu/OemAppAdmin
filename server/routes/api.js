@@ -12,7 +12,9 @@ router
 
   .get('/table/list', tableCtrl.getList)
   .get('/appList', appCtrl.appList)
-  .get('/userList', appCtrl.userList)
+  .get('/user/userList', appCtrl.userList)
   .get('/groupList', appCtrl.groupList)
+
+router.post('/user/userUpdate', appCtrl.userUpdate)
 
 export default router;

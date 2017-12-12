@@ -1,0 +1,48 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'D:\\nodejs\\node.exe',
+1 verbose cli   'D:\\nvm\\v7.7.3\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'run',
+1 verbose cli   'node:server' ]
+2 info using npm@4.1.2
+3 info using node@v7.7.3
+4 verbose run-script [ 'prenode:server', 'node:server', 'postnode:server' ]
+5 info lifecycle koa2-vue-boilerplate@1.0.0~prenode:server: koa2-vue-boilerplate@1.0.0
+6 silly lifecycle koa2-vue-boilerplate@1.0.0~prenode:server: no script for prenode:server, continuing
+7 info lifecycle koa2-vue-boilerplate@1.0.0~node:server: koa2-vue-boilerplate@1.0.0
+8 verbose lifecycle koa2-vue-boilerplate@1.0.0~node:server: unsafe-perm in lifecycle true
+9 verbose lifecycle koa2-vue-boilerplate@1.0.0~node:server: PATH: D:\nvm\v7.7.3\node_modules\npm\bin\node-gyp-bin;D:\WebstormProjects\OemAppAdmin\node_modules\.bin;D:\nvm\v7.7.3\node_modules\npm\bin\node-gyp-bin;D:\WebstormProjects\OemAppAdmin\node_modules\.bin;C:\Program Files\Java\jdk1.8\bin;C:\Program Files\Java\jdk1.8\jre\bin;C:\ProgramData\Oracle\Java\javapath;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files\PuTTY\;D:\Git\bin;D:\tomcat9.0\bin;C:\Program Files\MySQL\MySQL Server 5.7\bin;D:\nvm;D:\nodejs;D:\cmder;D:\Android\sdk1;D:\Android\sdk1\platform-tools;C:\Program Files\Java\jdk1.8\bin;C:\Program Files\Java\jdk1.8\jre\bin;C:\ProgramData\Oracle\Java\javapath;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Users\98882\AppData\Roaming\npm;C:\Users\98882\AppData\Local\Microsoft\WindowsApps;D:\nvm;D:\nodejs;D:\Microsoft VS Code\bin;D:\curl\src;;D:\Fiddler
+10 verbose lifecycle koa2-vue-boilerplate@1.0.0~node:server: CWD: D:\WebstormProjects\OemAppAdmin
+11 silly lifecycle koa2-vue-boilerplate@1.0.0~node:server: Args: [ '/d /s /c', 'nodemon -w app.js -w server index.js' ]
+12 silly lifecycle koa2-vue-boilerplate@1.0.0~node:server: Returned: code: 1  signal: null
+13 info lifecycle koa2-vue-boilerplate@1.0.0~node:server: Failed to exec node:server script
+14 verbose stack Error: koa2-vue-boilerplate@1.0.0 node:server: `nodemon -w app.js -w server index.js`
+14 verbose stack Exit status 1
+14 verbose stack     at EventEmitter.<anonymous> (D:\nvm\v7.7.3\node_modules\npm\lib\utils\lifecycle.js:279:16)
+14 verbose stack     at emitTwo (events.js:106:13)
+14 verbose stack     at EventEmitter.emit (events.js:194:7)
+14 verbose stack     at ChildProcess.<anonymous> (D:\nvm\v7.7.3\node_modules\npm\lib\utils\spawn.js:40:14)
+14 verbose stack     at emitTwo (events.js:106:13)
+14 verbose stack     at ChildProcess.emit (events.js:194:7)
+14 verbose stack     at maybeClose (internal/child_process.js:899:16)
+14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
+15 verbose pkgid koa2-vue-boilerplate@1.0.0
+16 verbose cwd D:\WebstormProjects\OemAppAdmin
+17 error Windows_NT 10.0.15063
+18 error argv "D:\\nodejs\\node.exe" "D:\\nvm\\v7.7.3\\node_modules\\npm\\bin\\npm-cli.js" "run" "node:server"
+19 error node v7.7.3
+20 error npm  v4.1.2
+21 error code ELIFECYCLE
+22 error koa2-vue-boilerplate@1.0.0 node:server: `nodemon -w app.js -w server index.js`
+22 error Exit status 1
+23 error Failed at the koa2-vue-boilerplate@1.0.0 node:server script 'nodemon -w app.js -w server index.js'.
+23 error Make sure you have the latest version of node.js and npm installed.
+23 error If you do, this is most likely a problem with the koa2-vue-boilerplate package,
+23 error not with npm itself.
+23 error Tell the author that this fails on your system:
+23 error     nodemon -w app.js -w server index.js
+23 error You can get information on how to open an issue for this project with:
+23 error     npm bugs koa2-vue-boilerplate
+23 error Or if that isn't available, you can get their info via:
+23 error     npm owner ls koa2-vue-boilerplate
+23 error There is likely additional logging output above.
+24 verbose exit [ 1, true ]
