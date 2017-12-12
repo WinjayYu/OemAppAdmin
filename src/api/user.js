@@ -20,10 +20,15 @@ const userUpdate = (data) => {
   return yFetch('/user/userUpdate', 'POST', data);
 }
 
+const userInsert = (data) => {
+  return yFetch('/user/userInsert', 'POST', data);
+}
+
 export {
   postLogin,
   postLogout,
   getUserInfo,
   getUserList,
-  userUpdate
+  userUpdate,
+  userInsert
 };

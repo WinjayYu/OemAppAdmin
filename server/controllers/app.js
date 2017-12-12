@@ -22,9 +22,16 @@ const userUpdate = async (ctx) => {
   ctx.body = res;
 }
 
+const userInsert = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.userInsert(item);
+  ctx.body = res;
+}
+
 export default {
   appList,
   userList,
   groupList,
-  userUpdate
+  userUpdate,
+  userInsert
 }

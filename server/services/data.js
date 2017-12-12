@@ -67,8 +67,8 @@ LEFT JOIN (
   return res;
 };
 
+// 用户更新
 const userUpdate = async (item) => {
-console.log('item', item);
   let res = await executeQuery(
     `UPDATE t_user
     SET phone = '${item.phone}', des = '${item.des}', update_time = '${item.updateTime}',  expiry_time = '${item.expiryTime}'
@@ -83,10 +83,47 @@ console.log('item', item);
   }
 };
 
+// 添加用户
+const userInsert = async (item) => {
+  let registerTime = Math.floor(new Date() / 1000);
+  let updateTime = registerTime;
+  let sql =  `INSERT INTO t_user
+      VALUES
+        (
+          NULL,
+          '${item.phone}',
+          '${item.des}',
+          '${registerTime}',
+          '${updateTime}',
+          '${item.expiryTime}',
+          1
+        )`
+  console.log('sql',sql)
+  let res = await executeQuery(
+    `INSERT INTO t_user
+      VALUES
+        (
+          NULL,
+          '${item.phone}',
+          '${item.des}',
+          '${registerTime}',
+          '${updateTime}',
+          '${item.expiryTime}',
+          1
+        )`
+  )
+  if(res) {
+    return {iRet: 0, res}
+  } else {
+    return {iRet: -1}
+  }
+}
+
 export default {
   appList,
   userList,
   groupList,
-  userUpdate
+  userUpdate,
+  userInsert
 }
 

@@ -16,5 +16,6 @@ router
   .get('/groupList', appCtrl.groupList)
 
 router.post('/user/userUpdate', appCtrl.userUpdate)
+router.post('/user/userInsert', appCtrl.userInsert)
 
 export default router;

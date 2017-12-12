@@ -43,6 +43,7 @@ const getUserInfo = async function(ctx) {
   };
 };
 
+
 export default {
   postLogin,
   postLogout,
