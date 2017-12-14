@@ -6,6 +6,7 @@ import user from './modules/user';
 import permission from './modules/permission';
 import getters from './getters';
 import appManage from './modules/appManage';
+import groupManage from './modules/groupManage';
 
 Vue.use(Vuex);
 
@@ -15,7 +16,8 @@ const store = new Vuex.Store({
     app,
     user,
     permission,
-    appManage
+    appManage,
+    groupManage
   },
   getters,
   plugins: isDev ? [createLogger()] : []

@@ -12,7 +12,7 @@ const appManage = {
   },
 
   actions: {
-    getAppList({commit, state}) {
+    getAppList({commit}, state) {
       return new Promise((resolve, reject) => {
         getAppList().then((res) => {
           commit('SET_APP_LIST', res);

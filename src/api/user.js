@@ -24,11 +24,16 @@ const userInsert = (data) => {
   return yFetch('/user/userInsert', 'POST', data);
 }
 
+const userDelete = (data) => {
+  return yFetch('/user/userDelete', 'POST', data);
+}
+
 export {
   postLogin,
   postLogout,
   getUserInfo,
   getUserList,
   userUpdate,
-  userInsert
+  userInsert,
+  userDelete,
 };

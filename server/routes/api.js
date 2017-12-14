@@ -11,11 +11,14 @@ router
   .get('/user', authCtrl.getUserInfo)
 
   .get('/table/list', tableCtrl.getList)
-  .get('/appList', appCtrl.appList)
+  .get('/app/appList', appCtrl.appList)
   .get('/user/userList', appCtrl.userList)
-  .get('/groupList', appCtrl.groupList)
+  .get('/group/groupList', appCtrl.groupList)
 
 router.post('/user/userUpdate', appCtrl.userUpdate)
 router.post('/user/userInsert', appCtrl.userInsert)
+router.post('/user/userDelete', appCtrl.userDelete)
+router.post('/app/appUpdate', appCtrl.appUpdate)
+router.post('/app/appStatus', appCtrl.appStatus)
 
 export default router;

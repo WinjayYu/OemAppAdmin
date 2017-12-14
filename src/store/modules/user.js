@@ -84,7 +84,7 @@ const user = {
       });
     },
 
-    getUserList({commit, state}) {
+    getUserList({commit}, state) {
      return new Promise((resolve, reject) => {
        getUserList().then((res) => {
          commit('SET_USER_LIST', res);

@@ -3,7 +3,8 @@
         <template v-for="item in routes">
             <router-link v-if="!item.hidden&&item.noDropdown&&item.children.length>0" :to="item.path+'/'+item.children[0].path">
                 <el-menu-item :index="item.path+'/'+item.children[0].path">
-                    <icon-svg v-if='item.icon' :icon-class="item.icon" /> {{item.children[0].name}}
+                    <!--<icon-svg v-if='item.icon' :icon-class="item.icon" /> {{item.children[0].name}}-->
+                  <i v-if='item.icon' class="icon fa" :class="item.icon"></i> {{item.children[0].name}}
                 </el-menu-item>
             </router-link>
             <el-submenu :index="item.name" v-if="!item.noDropdown&&!item.hidden">

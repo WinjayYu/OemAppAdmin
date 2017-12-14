@@ -22,6 +22,7 @@ const Err404 = _import('404');
 const Form = _import('page/form');
 const Table = _import('table/index');
 const UserList  = _import('page/userList');
+const AppList  = _import('page/appList');
 
 Vue.use(Router);
 
@@ -68,7 +69,7 @@ export const asyncRouterMap = [
     component: Layout,
     redirect: '/table/index',
     name: 'Table',
-    icon: 'tubiaoleixingzhengchang',
+    icon: 'icon-drag',
     noDropdown: true,
     children: [{ path: 'index', component: Table, name: 'Table', meta: { role: ['admin'] } }]
   },
@@ -78,10 +79,7 @@ export const asyncRouterMap = [
     component: Layout,
     redirect: '/user/userList',
     name: '用户',
-    meta: {
-      title: '用户',
-      icon: 'zujian'
-    },
+    icon: 'el-icon-menu',
     noDropdown: true,
     children: [
       {path: 'userList', component: UserList, name: '用户列表', meta: {title: '用户列表'}}
@@ -95,11 +93,12 @@ export const asyncRouterMap = [
     name: 'app',
     meta: {
       title: 'app',
-      icon: 'zujian'
+      icon: 'icon-drag'
     },
+    icon: 'el-icon-star-on',
     noDropdown: true,
     children: [
-      {path: 'appList', component: UserList, name: 'app列表', meta: {title: 'app列表'}}
+      {path: 'appList', component: AppList, name: 'app列表', meta: {title: 'app列表'}}
     ]
   },
 
