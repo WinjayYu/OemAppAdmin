@@ -22,9 +22,13 @@ async function executeQuery(sql) {
 // app列表
 const appList = async () => {
   let res = await executeQuery(`SELECT
-	a.*, d.groups
+	a.*, d.groups, o.app_order as appOrder
 FROM
 	t_app a
+LEFT JOIN 
+	t_app_order o 
+on
+	a.id = o.app_id
 LEFT JOIN (
 	SELECT
 		ag.app_id,
@@ -44,7 +48,8 @@ LEFT JOIN (
 	LEFT JOIN t_group g ON ag.group_id = g.id
 	GROUP BY
 		ag.app_id
-) d ON a.id = d.app_id`);
+) d ON a.id = d.app_id
+ORDER BY o.app_order ASC`);
   res = res.map((item) => {
     if(!item.groups) {
       item.groups = item.groups === null ? '' : item.groups;
@@ -86,7 +91,7 @@ const appStatusSer = async (item) => {
   const res = await executeQuery(`
     UPDATE t_app
     SET status = ${status}
-    where 
+    WHERE 
       id = ${item.id}`)
   if(res) {
     return {iRet: 0, res}
@@ -182,7 +187,7 @@ const userInsert = async (item) => {
 
 //删除用户
 const userDeleteSer = async (item) => {
-  let res = executeQuery(
+  let res = await executeQuery(
     `UPDATE t_user SET status = 0 WHERE id = ${item.id}`
   );
   if(res) {
@@ -192,7 +197,47 @@ const userDeleteSer = async (item) => {
   }
 };
 
+const appOrderSer = async (item) => {
+  let temp;
+  let res;
+  for(let i = 0; i < item.length; i++) {
+    temp = await executeQuery(
+      `SELECT app_id AS appId FROM t_app_order WHERE app_order = ${item[i]}`
+    );
+console.log(temp[0].appId + '   ' + i);
+    res = await  executeQuery(
+      `UPDATE t_app_order SET app_order = ${i + 1} WHERE app_id = ${temp[0].appId}`
+    );
+  }
+  return {iRet: 0}
+};
 
+const appInsertSer = async (item) => {
+  let registerTime = getCurrentDate();
+  let res = executeQuery(
+    `INSERT INTO t_app
+     VALUES
+	    (
+	    NULL,
+	    '${item.name}',
+	    '${item.url}',
+	    '${item.des}',
+	    '${item.icon}',
+	    1,
+	    registerTime,
+	    registerTime
+	    )`);
+  if(res) {
+    return { iRet:0 }
+  } else {
+    return { iRet: -1 }
+  }
+}
+
+// 获取当前时间，秒
+function getCurrentDate() {
+  return Math.floor(new Date() / 1000);
+}
 
 export default {
   appList,
@@ -202,6 +247,8 @@ export default {
   userInsert,
   userDeleteSer,
   appUpdateSer,
-  appStatusSer
+  appStatusSer,
+  appOrderSer,
+  appInsertSer
 }
 

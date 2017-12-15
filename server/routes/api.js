@@ -20,5 +20,7 @@ router.post('/user/userInsert', appCtrl.userInsert)
 router.post('/user/userDelete', appCtrl.userDelete)
 router.post('/app/appUpdate', appCtrl.appUpdate)
 router.post('/app/appStatus', appCtrl.appStatus)
+router.post('/app/appOrder', appCtrl.appOrder)
+router.post('/app/appInsert', appCtrl.appInsert)
 
 export default router;

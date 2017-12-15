@@ -1,6 +1,10 @@
 <template>
   <div class="app-container calendar-list-container">
+    <div class="filter-container">
+      <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary" icon="el-icon-edit">添加APP</el-button>
+    </div>
     <el-table :data="list" v-loading.body="listLoading" border fit highlight-current-row style="width: 100%">
+      <el-table-column prop="appOrder" align="center" label="顺序" width="70px"></el-table-column>
       <el-table-column prop="id" align="center" label="ID" width="50px"></el-table-column>
       <el-table-column prop="name" align="center" label="名称"></el-table-column>
       <el-table-column prop="des" align="center" label="描述"></el-table-column>
@@ -60,12 +64,13 @@
         <el-button type="primary" @click="setAppStatus">确 定</el-button>
       </span>
     </el-dialog>
+    <div :visible.sync="dragVisible" v-loading.body="dragLoading"></div>
     <div class='show-d'>默认顺序 &nbsp; {{ olderList}}</div>
     <div class='show-d'>拖拽后顺序{{newList}}</div>
   </div>
 </template>
 <script>
-  import { appUpdate,appStatus } from '@/api/appManage'
+  import { appUpdate,appStatus,appOrder,appInsert } from '@/api/appManage'
   import _ from 'lodash';
   import Sortable from 'sortablejs';
   import drag from '@/assets/images/drag.png';
@@ -81,6 +86,8 @@
         dialogStatus: false,
         dialogDeleteVisible: false,
         deleteLoading: false,
+        dragLoading: false,
+        dragVisible: false,
         statusFlag: '',
         temp: {
           id: undefined,
@@ -88,7 +95,7 @@
           des: '',
           url: '',
           status: '',
-          order: '',
+          appOrder: '',
           updateTime: '',
           groups: []
         },
@@ -131,6 +138,8 @@
         this.$store.dispatch('getAppList').then(res => {
           vm.listLoading = false;
           vm.setSort();
+          vm.olderList = vm.list.map(v => v.appOrder);
+          vm.newList = vm.olderList.slice();
         })
       },
       handleUpdate(row) {
@@ -156,6 +165,11 @@
             vm.appInGroup = _.unionBy(vm.appInGroup, vm.groupList, 'id');
           }
         });
+      },
+      handleCreate(row) {
+        this.resetTemp();
+        this.dialogStatus = 'create';
+        this.dialogFormVisible = true;
       },
       updateData() {
         let vm = this;
@@ -222,17 +236,30 @@
           des: '',
           url: '',
           status: '',
-          order: '',
+          appOrder: '',
           updateTime: '',
           groups: []
         }
       },
       setSort() {
+        let vm = this;
         const el = document.querySelectorAll('tbody')[0];
         this.sortable = Sortable.create(el,{
+          onStart: evt => {
+            vm.dragLoading = true;
+            vm.dragVisible = true;
+          },
           onEnd: evt => {
-            const tempIndex = this.newList.splice(evt.oldIndex, 1)[0]
-            this.newList.splice(evt.newIndex, 0, tempIndex)
+            const tempIndex = vm.newList.splice(evt.oldIndex, 1)[0];
+            vm.newList.splice(evt.newIndex, 0, tempIndex);
+            appOrder(vm.newList).then((res) =>{
+              if(res.iRet === 0) {
+                vm.dragLoading = false;
+                vm.dragVisible = false;
+                vm.getAppList();
+              }
+            });
+
           }
         })
       }

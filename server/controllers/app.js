@@ -44,6 +44,18 @@ const appStatus = async (ctx) => {
   let item = ctx.request.body;
   let res = await dataSer.appStatusSer(item);
   ctx.body = res;
+};
+
+const appOrder = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.appOrderSer(item);
+  ctx.body = res;
+};
+
+const appInsert = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.appInsertSer(item);
+  ctx.body = res;
 }
 
 export default {
@@ -54,5 +66,7 @@ export default {
   userInsert,
   userDelete,
   appUpdate,
-  appStatus
+  appStatus,
+  appOrder,
+  appInsert
 }

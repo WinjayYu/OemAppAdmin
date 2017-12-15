@@ -15,8 +15,18 @@ const appStatus = (data) => {
   return yFetch('/app/appStatus', 'POST', data);
 };
 
+const appOrder = (data) => {
+  return yFetch('/app/appOrder', 'POST', data);
+};
+
+const appInsert = (data) => {
+  return yFetch('/app/appInsert', 'POST', data);
+}
+
 export {
   getAppList,
   appUpdate,
-  appStatus
+  appStatus,
+  appOrder,
+  appInsert
 }
