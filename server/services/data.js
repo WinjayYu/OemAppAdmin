@@ -2,6 +2,15 @@ const mysql = require('mysql2/promise');
 const config = global.config;
 const logger = require('../common/logger');
 const _ = require('lodash');
+const parse = require('await-busboy');
+const read = require('read-all-stream');
+const path = require('path');
+
+var upFileUpload = require('@up/file-upload')({
+  bucket: "upcdnfiles",
+  busid: "cdnAsync"
+});
+var fs = require("fs");
 const pool = mysql.createPool({
   host: config.DB.host,
   user: config.DB.user,
@@ -108,7 +117,7 @@ const userList = async () => {
 // 组列表
 const groupList = async () => {
   let res = await executeQuery(`  SELECT
-	c.*, d.array
+	c.id, c.name, c.des, c.order, c.register_time AS registerTime, c.update_time AS updateTime, d.array
 FROM
 	t_group c
 LEFT JOIN (
@@ -224,20 +233,41 @@ const appInsertSer = async (item) => {
 	    '${item.des}',
 	    '${item.icon}',
 	    1,
-	    registerTime,
-	    registerTime
+	    ${registerTime},
+	    ${registerTime}
 	    )`);
   if(res) {
-    return { iRet:0 }
+    return { iRet: 0 }
   } else {
     return { iRet: -1 }
   }
-}
+};
+
+const imgUpload = async (ctx) => {
+  let body = ctx.request.body;
+  let res;
+  try{
+    let parts = parse(ctx, {autoFields: true});
+    let part;
+    let pics = [];
+    while (part = await parts) {
+      let data = await read(part, {encoding: null});
+        let ret = await upFileUpload.uploadFile(data, part.filename, 'OemApp', 0);
+        pics.push(ret);
+    }
+    console.log(pics);
+   } catch (e) {
+    logger.error.error(e);
+    return { iRet: -1 };
+  }
+};
 
 // 获取当前时间，秒
 function getCurrentDate() {
   return Math.floor(new Date() / 1000);
 }
+
+
 
 export default {
   appList,
@@ -249,6 +279,7 @@ export default {
   appUpdateSer,
   appStatusSer,
   appOrderSer,
-  appInsertSer
+  appInsertSer,
+  imgUpload
 }
 

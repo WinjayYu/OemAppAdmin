@@ -22,5 +22,6 @@ router.post('/app/appUpdate', appCtrl.appUpdate)
 router.post('/app/appStatus', appCtrl.appStatus)
 router.post('/app/appOrder', appCtrl.appOrder)
 router.post('/app/appInsert', appCtrl.appInsert)
+router.post('/app/imgUpload', appCtrl.imgUpload)
 
 export default router;

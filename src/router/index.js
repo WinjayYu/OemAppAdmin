@@ -23,6 +23,7 @@ const Form = _import('page/form');
 const Table = _import('table/index');
 const UserList  = _import('page/userList');
 const AppList  = _import('page/appList');
+const GroupList = _import('page/groupList');
 
 Vue.use(Router);
 
@@ -99,6 +100,22 @@ export const asyncRouterMap = [
     noDropdown: true,
     children: [
       {path: 'appList', component: AppList, name: 'app列表', meta: {title: 'app列表'}}
+    ]
+  },
+
+  {
+    path: '/group',
+    component: Layout,
+    redirect: '/group/groupList',
+    name: 'group',
+    meta: {
+      title: 'group',
+      icon: 'icon-drag'
+    },
+    icon: 'el-icon-star-on',
+    noDropdown: true,
+    children: [
+      {path: 'groupList', component: GroupList, name: '组列表', meta: {title: '组列表'}}
     ]
   },
 

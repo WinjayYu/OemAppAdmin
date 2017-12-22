@@ -7,12 +7,14 @@ import historyApiFallback from 'koa2-history-api-fallback';
 import Router from 'koa-router';
 import bodyparser from 'koa-bodyparser';
 import render from 'koa-ejs';
+// const koaBody = require('koa-body');
 
 import api from './routes/api';
 
 const app = new Koa();
 const router = Router();
 
+// app.use(koaBody({ multipart: true }));
 app.use(bodyparser());
 app.use(json());
 app.use(logger());

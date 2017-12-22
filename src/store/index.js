@@ -17,7 +17,7 @@ const store = new Vuex.Store({
     user,
     permission,
     appManage,
-    groupManage
+    groupManage,
   },
   getters,
   plugins: isDev ? [createLogger()] : []

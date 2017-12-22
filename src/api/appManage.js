@@ -21,6 +21,10 @@ const appOrder = (data) => {
 
 const appInsert = (data) => {
   return yFetch('/app/appInsert', 'POST', data);
+};
+
+const imgUpload = (data) => {
+  return yFetch('/app/imgUpload', 'POST', data);
 }
 
 export {
@@ -28,5 +32,6 @@ export {
   appUpdate,
   appStatus,
   appOrder,
-  appInsert
+  appInsert,
+  imgUpload
 }

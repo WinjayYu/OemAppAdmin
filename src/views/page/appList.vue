@@ -43,24 +43,40 @@
         <el-form-item label="描述" prop="des">
           <el-input v-model="temp.des"></el-input>
         </el-form-item>
-        <el-form-item label="所在组:" prop="">
-          <template>
-            <el-checkbox-group v-model="checklist">
-              <el-checkbox v-for="item in appInGroup" v-if="item.flag" :label="item.id" :key="item.id">{{item.name}}</el-checkbox>
-              <el-checkbox v-else :label="item.id" :key="item.id">{{item.name}}</el-checkbox>
-            </el-checkbox-group>
-          </template>
+        <el-form-item label="icon" prop="icon">
+          <el-input v-model="temp.icon"></el-input>
         </el-form-item>
+        <!--<el-form-item label="所在组:" prop="">-->
+          <!--<template>-->
+            <!--<el-checkbox-group v-model="checklist">-->
+              <!--<el-checkbox v-for="item in appInGroup" v-if="item.flag" :label="item.id" :key="item.id">{{item.name}}</el-checkbox>-->
+              <!--<el-checkbox v-else :label="item.id" :key="item.id">{{item.name}}</el-checkbox>-->
+            <!--</el-checkbox-group>-->
+          <!--</template>-->
+        <!--</el-form-item>-->
       </el-form>
+      <template>
+        <el-upload
+          ref="upload"
+          class="avatar-uploader"
+          action="/api/app/imgUpload"
+          :data="uploadData"
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload">
+          <img v-if="imageUrl" :src="imageUrl" class="avatar">
+          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+        </el-upload>
+      </template>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button @click="cancel">取 消</el-button>
         <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定c</el-button>
         <el-button v-else type="primary" @click="updateData">确 定u</el-button>
       </div>
     </el-dialog>
     <el-dialog :title="statusMap[statusFlag]" :visible.sync="dialogDeleteVisible" v-loading.body="deleteLoading" size="tiny">
       <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogDeleteVisible = false">取 消</el-button>
+        <el-button @click="cancel">取 消</el-button>
         <el-button type="primary" @click="setAppStatus">确 定</el-button>
       </span>
     </el-dialog>
@@ -70,7 +86,7 @@
   </div>
 </template>
 <script>
-  import { appUpdate,appStatus,appOrder,appInsert } from '@/api/appManage'
+  import { appUpdate,appStatus,appOrder,appInsert,imgUpload } from '@/api/appManage'
   import _ from 'lodash';
   import Sortable from 'sortablejs';
   import drag from '@/assets/images/drag.png';
@@ -89,6 +105,7 @@
         dragLoading: false,
         dragVisible: false,
         statusFlag: '',
+        uploadData: {},
         temp: {
           id: undefined,
           name: '',
@@ -113,10 +130,12 @@
         sortable: null,
         olderList: [],
         newList: [],
+        imageUrl: '',
         rules: {
           name: [{required: true, message: '必填项', trigger: 'blur'}],
           des: [{required: true, message: '必填项', trigger: 'blur'}],
-          url: [{required: true, message: '必填项', trigger: 'blur'}]
+          url: [{required: true, message: '必填项', trigger: 'blur'}],
+          icon: [{required: true, message: '必填项', trigger: 'blur'}]
         }
       }
     },
@@ -149,6 +168,7 @@
         this.temp = {...row};
         this.dialogStatus = 'update';
         this.dialogFormVisible = true;
+        this.uploadData = {id: row.id};
         this.$store.dispatch('getGroupList').then(res => {
           if(!res) {
             vm.$message({
@@ -156,13 +176,15 @@
               type: 'error'
             })
           } else {
-            vm.appInGroup = vm.temp.groups.map(v => {
-              v.flag = 1;
-              vm.checklist.push(v.id);
-              return v;
-            });
-            vm.checklistTemp = [...vm.checklist];
-            vm.appInGroup = _.unionBy(vm.appInGroup, vm.groupList, 'id');
+            if(vm.temp.groups) {
+              vm.appInGroup = vm.temp.groups.map(v => {
+                v.flag = 1;
+                vm.checklist.push(v.id);
+                return v;
+              });
+              vm.checklistTemp = [...vm.checklist];
+              vm.appInGroup = _.unionBy(vm.appInGroup, vm.groupList, 'id');
+            }
           }
         });
       },
@@ -202,7 +224,28 @@
         })
       },
       createData() {
-
+        let vm = this;
+        vm.updateLoading = true;
+        this.$refs['dataForm'].validate(valid => {
+          if(valid) {
+            appInsert(vm.temp).then((res) => {
+              vm.updateLoading = false;
+              vm.dialogFormVisible = false;
+              if(res.iRet === 0) {
+                vm.getAppList();
+                vm.$message({
+                  message: '添加成功！',
+                  type: 'success'
+                })
+              }else {
+                vm.$message({
+                  message: '系统出错！',
+                  type: 'error'
+                })
+              }
+            })
+          }
+        })
       },
       handleAppStatus(row) {
         this.temp = {...row};
@@ -262,7 +305,54 @@
 
           }
         })
+      },
+      handleAvatarSuccess(res, file) {
+        this.imageUrl = URL.createObjectURL(file.raw);
+      },
+      beforeAvatarUpload(file) {
+        const isImg = /(png|jpe?g|gif)/g.test(file.type);
+        const isLt2M = file.size / 1024 / 1024 < 2;
+
+        if (!isImg) {
+          this.$message.error('上传图片格式不对!');
+        }
+        if (!isLt2M) {
+          this.$message.error('上传图片大小不能超过 2MB!');
+        }
+        return isImg && isLt2M;
+      },
+      cancel() {
+        this.dialogFormVisible = false;
+        this.dialogDeleteVisible = false;
+        this.uploadData = {};
+        this.imageUrl = '';
       }
     }
   }
 </script>
+
+<style>
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
+  }
+</style>

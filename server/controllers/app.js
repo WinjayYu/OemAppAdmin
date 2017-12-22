@@ -56,6 +56,13 @@ const appInsert = async (ctx) => {
   let item = ctx.request.body;
   let res = await dataSer.appInsertSer(item);
   ctx.body = res;
+};
+
+const imgUpload = async (ctx) => {
+  let body = ctx.request.body;
+console.log(body)
+  let res = await dataSer.imgUpload(ctx);
+  ctx.body = res
 }
 
 export default {
@@ -68,5 +75,6 @@ export default {
   appUpdate,
   appStatus,
   appOrder,
-  appInsert
+  appInsert,
+  imgUpload
 }
