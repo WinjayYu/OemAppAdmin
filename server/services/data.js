@@ -78,7 +78,8 @@ const appUpdateSer = async (item) => {
     UPDATE t_app
     SET name = '${item.name}',
      des = '${item.des}',
-     update_time = '${updateTime}'
+     update_time = '${updateTime}',
+     icon = '${item.icon}'
     WHERE
       id = ${item.id}`);
 
@@ -239,7 +240,6 @@ const appInsertSer = async (item) => {
 };
 
 const imgUpload = async (ctx) => {
-  let body = ctx.request.body;
   let res;
   try{
     let parts = parse(ctx, {autoFields: true});
@@ -250,7 +250,8 @@ const imgUpload = async (ctx) => {
         let ret = await upFileUpload.uploadFile(data, part.filename, 'OemApp', 0);
         pics.push(ret);
     }
-    console.log(pics);
+    let url = 'https://cdn.upchina.com/' + pics[0];
+    return { iRet: 0, url };
    } catch (e) {
     logger.error.error(e);
     return { iRet: -1 };
@@ -263,7 +264,6 @@ function getCurrentDate() {
 }
 
 const groupUpdate = async (item) => {
-console.log('3333', item);
   let updateTime = Math.floor(new Date() / 1000);
   const res1 = await executeQuery(`
     UPDATE t_group

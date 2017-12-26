@@ -59,8 +59,6 @@ const appInsert = async (ctx) => {
 };
 
 const imgUpload = async (ctx) => {
-  let body = ctx.request.body;
-console.log(body)
   let res = await dataSer.imgUpload(ctx);
   ctx.body = res
 };

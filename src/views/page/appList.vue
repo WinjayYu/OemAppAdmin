@@ -52,10 +52,10 @@
           ref="upload"
           class="avatar-uploader"
           action="/api/app/imgUpload"
-          :data="uploadData"
           :show-file-list="false"
           :on-success="handleAvatarSuccess"
-          :before-upload="beforeAvatarUpload">
+          :before-upload="beforeAvatarUpload"
+        >
           <img v-if="imageUrl" :src="imageUrl" class="avatar">
           <i v-else class="el-icon-plus avatar-uploader-icon"></i>
         </el-upload>
@@ -97,7 +97,6 @@
         dragLoading: false,
         dragVisible: false,
         statusFlag: '',
-        uploadData: {},
         temp: {
           id: undefined,
           name: '',
@@ -165,7 +164,6 @@
         this.temp = {...row};
         this.dialogStatus = 'update';
         this.dialogFormVisible = true;
-        this.uploadData = {id: row.id};
         this.$store.dispatch('getGroupList').then(res => {
           if(!res) {
             vm.$message({
@@ -307,7 +305,9 @@
         })
       },
       handleAvatarSuccess(res, file) {
-        this.imageUrl = URL.createObjectURL(file.raw);
+//        this.imageUrl = URL.createObjectURL(file.raw);
+          this.imageUrl = res.url;
+          this.temp.icon = res.url;
       },
       beforeAvatarUpload(file) {
         const isImg = /(png|jpe?g|gif)/g.test(file.type);
@@ -319,12 +319,13 @@
         if (!isLt2M) {
           this.$message.error('上传图片大小不能超过 2MB!');
         }
+
         return isImg && isLt2M;
+
       },
       cancel() {
         this.dialogFormVisible = false;
         this.dialogDeleteVisible = false;
-        this.uploadData = {};
         this.imageUrl = '';
       }
     }
