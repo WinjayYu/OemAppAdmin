@@ -40,7 +40,7 @@ export const constantRouterMap = [
   {
     path: '/',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/user',
     name: 'Home',
     hidden: true,
     children: [{ path: 'dashboard', component: dashboard }]
@@ -54,27 +54,6 @@ export default new Router({
 });
 
 export const asyncRouterMap = [
-  {
-    path: '/home',
-    component: Layout,
-    redirect: 'noredirect',
-    name: 'Home',
-    icon: 'zujian',
-    children: [
-      { path: 'index', component: Form, name: 'Form', icon: 'zonghe' }
-    ]
-  },
-
-  {
-    path: '/table',
-    component: Layout,
-    redirect: '/table/index',
-    name: 'Table',
-    icon: 'icon-drag',
-    noDropdown: true,
-    children: [{ path: 'index', component: Table, name: 'Table', meta: { role: ['admin'] } }]
-  },
-
   {
     path: '/user',
     component: Layout,

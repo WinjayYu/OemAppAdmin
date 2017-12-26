@@ -4,7 +4,6 @@
       <el-button class="filter-item" style="margin: 10px 0;" @click="handleCreate" type="primary" icon="el-icon-edit">添加APP</el-button>
     </div>
     <el-table :data="list" v-loading.body="listLoading" border fit highlight-current-row style="width: 100%">
-      <el-table-column prop="appOrder" align="center" label="顺序" width="70px"></el-table-column>
       <el-table-column prop="id" align="center" label="ID" width="50px"></el-table-column>
       <el-table-column prop="name" align="center" label="名称"></el-table-column>
       <el-table-column prop="des" align="center" label="描述"></el-table-column>
@@ -26,9 +25,9 @@
           <el-button v-else type="primary" size="small" @click="handleAppStatus(scope.row)">上架</el-button>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="拖拽" width="100">
+      <el-table-column align="center"  label="拖拽" width="100">
         <template scope="scope">
-          <img :src="drag" alt="drag">
+          <img :src="drag" alt="drag" class="drag">
         </template>
       </el-table-column>
     </el-table>
@@ -46,14 +45,7 @@
         <el-form-item label="icon" prop="icon">
           <el-input v-model="temp.icon"></el-input>
         </el-form-item>
-        <!--<el-form-item label="所在组:" prop="">-->
-          <!--<template>-->
-            <!--<el-checkbox-group v-model="checklist">-->
-              <!--<el-checkbox v-for="item in appInGroup" v-if="item.flag" :label="item.id" :key="item.id">{{item.name}}</el-checkbox>-->
-              <!--<el-checkbox v-else :label="item.id" :key="item.id">{{item.name}}</el-checkbox>-->
-            <!--</el-checkbox-group>-->
-          <!--</template>-->
-        <!--</el-form-item>-->
+
       </el-form>
       <template>
         <el-upload
@@ -81,8 +73,8 @@
       </span>
     </el-dialog>
     <div :visible.sync="dragVisible" v-loading.body="dragLoading"></div>
-    <div class='show-d'>默认顺序 &nbsp; {{ olderList}}</div>
-    <div class='show-d'>拖拽后顺序{{newList}}</div>
+    <!--<div class='show-d'>默认顺序 &nbsp; {{ olderList}}</div>-->
+    <!--<div class='show-d'>拖拽后顺序{{newList}}</div>-->
   </div>
 </template>
 <script>
@@ -142,6 +134,10 @@
     created() {
       this.getAppList();
     },
+    mounted(){
+      this.setSort();
+
+    },
     computed: {
       list() {
         return this.$store.state.appManage.appList;
@@ -156,8 +152,9 @@
         this.listLoading = true;
         this.$store.dispatch('getAppList').then(res => {
           vm.listLoading = false;
-          vm.setSort();
-          vm.olderList = vm.list.map(v => v.appOrder);
+          vm.olderList = vm.list.map(v => {
+            return { order: v.appOrder, id: v.id }
+          });
           vm.newList = vm.olderList.slice();
         })
       },
@@ -195,6 +192,7 @@
       },
       updateData() {
         let vm = this;
+
         vm.updateLoading = true;
         vm.$refs['dataForm'].validate(valid => {
           if(valid) {
@@ -288,6 +286,8 @@
         let vm = this;
         const el = document.querySelectorAll('tbody')[0];
         this.sortable = Sortable.create(el,{
+          animation: 500,
+          dragClass: '.drag',
           onStart: evt => {
             vm.dragLoading = true;
             vm.dragVisible = true;
@@ -299,7 +299,7 @@
               if(res.iRet === 0) {
                 vm.dragLoading = false;
                 vm.dragVisible = false;
-                vm.getAppList();
+//                vm.getAppList();
               }
             });
 

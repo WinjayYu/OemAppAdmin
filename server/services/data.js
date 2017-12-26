@@ -207,15 +207,10 @@ const userDeleteSer = async (item) => {
 };
 
 const appOrderSer = async (item) => {
-  let temp;
   let res;
   for(let i = 0; i < item.length; i++) {
-    temp = await executeQuery(
-      `SELECT app_id AS appId FROM t_app_order WHERE app_order = ${item[i]}`
-    );
-console.log(temp[0].appId + '   ' + i);
     res = await  executeQuery(
-      `UPDATE t_app_order SET app_order = ${i + 1} WHERE app_id = ${temp[0].appId}`
+      `UPDATE t_app_order SET app_order = ${i + 1} WHERE app_id = ${item[i].id}`
     );
   }
   return {iRet: 0}
