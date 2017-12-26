@@ -267,7 +267,118 @@ function getCurrentDate() {
   return Math.floor(new Date() / 1000);
 }
 
+const groupUpdate = async (item) => {
+console.log('3333', item);
+  let updateTime = Math.floor(new Date() / 1000);
+  const res1 = await executeQuery(`
+    UPDATE t_group
+    SET name = '${item.name}',
+     des = '${item.des}',
+     update_time = '${updateTime}'
+    WHERE
+      id = ${item.id}`);
 
+  if(item.hasOwnProperty('checklist')) {
+    await executeQuery(`DELETE FROM t_app_group WHERE group_id = ${item.id}`);
+      for(let i = 0; i < item.checklist.length; i++ ) {
+        await executeQuery(`INSERT INTO t_app_group VALUES (${item.checklist[i]}, ${item.id})`)
+      }
+  }
+  if(res1) {
+    return {iRet: 0, res1}
+  } else {
+    return {iRet: -1}
+  }
+};
+
+const result = async (phone) => {
+  let sql =
+`SELECT
+	    t1.id,
+	    t1.name,
+	    t1.des,
+	    t2.app
+FROM
+	(
+		SELECT
+			g.*, t.*
+		FROM
+			t_group g
+		JOIN (
+			SELECT
+				*
+			FROM
+				t_user_group
+			WHERE
+				user_id = (
+					SELECT
+						id
+					FROM
+						t_user
+					WHERE
+						phone = '${phone}'
+				)
+		) t ON g.id = t.group_id
+	) t1
+JOIN (
+	SELECT
+		ag.*, CONCAT(
+			'[',
+			GROUP_CONCAT(
+				'{',
+				CONCAT('"id":', a.id),
+				',',
+				CONCAT('"name":"', a.NAME, '"'),
+				',',
+				CONCAT('"icon":"', a.icon, '"'),
+				',',
+				CONCAT('"url":"', a.url, '"'),
+				'}'
+			),
+			']'
+		) AS app
+	FROM
+		t_app_group ag
+	JOIN t_app a ON ag.app_id = a.id
+	GROUP BY
+		ag.group_id
+) t2 ON t1.id = t2.group_id`;
+
+  let res = await executeQuery(sql);
+  if(res) {
+    res.forEach(v => {
+      v.app = JSON.parse(v.app);
+    });
+    return { iRet: 0, message: 'ok', groups: res }
+  } else {
+    return { iRet: -1,  }
+  }
+};
+
+const groupInsert = async (item) => {
+
+  let maxOrder = await executeQuery(`SELECT MAX(g.order) AS groupOrder FROM t_group g`);
+console.log('maxOrder', maxOrder[0].groupOrder);
+
+  let registerTime = getCurrentDate();
+  let res = executeQuery(
+    `INSERT INTO t_group
+     VALUES
+	    (
+	    NULL,
+	    '${item.name}',
+	    '${item.des}',
+	    1,
+	    '${maxOrder[0].groupOrder + 1}',
+	    ${registerTime},
+	    ${registerTime}
+	    )`);
+  if(res) {
+    return { iRet: 0 }
+  } else {
+    return { iRet: -1 }
+  }
+}
 
 export default {
   appList,
@@ -280,6 +391,9 @@ export default {
   appStatusSer,
   appOrderSer,
   appInsertSer,
-  imgUpload
+  imgUpload,
+  groupUpdate,
+  result,
+  groupInsert
 }
 

@@ -15,6 +15,7 @@ router
   .get('/user/userList', appCtrl.userList)
   .get('/group/groupList', appCtrl.groupList)
 
+
 router.post('/user/userUpdate', appCtrl.userUpdate)
 router.post('/user/userInsert', appCtrl.userInsert)
 router.post('/user/userDelete', appCtrl.userDelete)
@@ -23,5 +24,9 @@ router.post('/app/appStatus', appCtrl.appStatus)
 router.post('/app/appOrder', appCtrl.appOrder)
 router.post('/app/appInsert', appCtrl.appInsert)
 router.post('/app/imgUpload', appCtrl.imgUpload)
+router.post('/group/groupUpdate', appCtrl.groupUpdate)
+router.post('/group/groupInsert', appCtrl.groupInsert)
+
+router.post('/result', appCtrl.result)
 
 export default router;

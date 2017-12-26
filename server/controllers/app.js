@@ -63,6 +63,24 @@ const imgUpload = async (ctx) => {
 console.log(body)
   let res = await dataSer.imgUpload(ctx);
   ctx.body = res
+};
+
+const groupUpdate = async (ctx) => {
+  let body = ctx.request.body;
+  let res = await dataSer.groupUpdate(body);
+  ctx.body = res;
+};
+
+const result = async (ctx)  => {
+  let { phone } = ctx.request.body;
+  let res = await dataSer.result(phone);
+  ctx.body = res;
+};
+
+const groupInsert = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.groupInsert(item);
+  ctx.body = res;
 }
 
 export default {
@@ -76,5 +94,8 @@ export default {
   appStatus,
   appOrder,
   appInsert,
-  imgUpload
+  imgUpload,
+  groupUpdate,
+  result,
+  groupInsert
 }

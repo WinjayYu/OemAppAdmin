@@ -1,5 +1,8 @@
 <template>
   <div class="app-container calendar-list-container">
+    <div class="filter-container">
+      <el-button class="filter-item" style="margin: 10px 0;" @click="handleCreate" type="primary" icon="el-icon-edit">添加组</el-button>
+    </div>
     <el-table :data="list" v-loading.body="listLoading" border fit highlight-current-row style="width: 100%">
       <el-table-column prop="id" align="center" label="ID" width="50px"></el-table-column>
       <el-table-column prop="name" align="center" label="名称"></el-table-column>
@@ -32,12 +35,18 @@
         </template>
         </el-form-item>
       </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancel">取 消</el-button>
+        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定c</el-button>
+        <el-button v-else type="primary" @click="updateData">确 定u</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
   import _ from 'lodash';
+  import { groupUpdate, groupInsert } from '@/api/groupManage'
   export default {
     data() {
       return {
@@ -75,9 +84,6 @@
       this.getGroupList();
     },
     methods: {
-      getAppList() {
-        this.appList = this.$store.state.appManage.appList;
-      },
       getGroupList() {
         let vm = this;
         this.listLoading = true;
@@ -86,12 +92,20 @@
         })
       },
       handleUpdate(row) {
-        console.log(row)
-        let vm = this;
+        console.log(row);
         this.temp = {...row};
         this.dialogStatus = 'update';
         this.dialogFormVisible = true;
-        this.getAppList();
+        this.handleAppList();
+      },
+      handleCreate () {
+        this.reset();
+        this.dialogStatus = 'create';
+        this.dialogFormVisible = true;
+        this.handleAppList();
+      },
+      handleAppList () {
+        let vm = this;
         this.$store.dispatch('getAppList').then(res => {
           if(!res) {
             vm.$message({
@@ -99,16 +113,95 @@
               type: 'error'
             })
           } else {
-            vm.appInGroup = vm.temp.array.map(v => {
-              v.flag = 1;
-              vm.checklist.push(v.id);
-              return v;
-            })
+            vm.appList = res;
+            if(vm.temp.array) {
+              vm.appInGroup = vm.temp.array.map(v => {
+                v.flag = 1;
+                v.id = parseInt(v.id);
+                vm.checklist.push(v.id);
+                return v;
+              });
+            }
             vm.checklistTemp = [...vm.checklist];
+
             vm.appInGroup = _.unionBy(vm.appInGroup, vm.appList, 'id');
           }
         })
       },
+      createData () {
+        let vm = this;
+        vm.updateLoading = true;
+        this.$refs['dataForm'].validate((valid) => {
+          if(valid) {
+            groupInsert(vm.temp).then((res) => {
+              vm.updateLoading = false;
+              vm.dialogFormVisible = false;
+              if(res.iRet === 0) {
+                vm.getGroupList();
+                vm.$message({
+                  message: '添加成功！',
+                  type: 'success'
+                })
+              } else {
+                vm.$message({
+                  message: '系统出错！',
+                  type: 'error'
+                })
+              }
+            })
+          }
+        })
+      },
+      updateData() {
+        let vm = this;
+        vm.updateLoading = true;
+        vm.$refs['dataForm'].validate(valid => {
+          if(valid) {
+            const tempData = {...vm.temp};
+            let equTemp = vm.checklistTemp.sort((a,b) => a-b).toString();
+            let equ = vm.checklist.sort((a,b) => a-b).toString();
+            if(equTemp !== equ) {    // 只有当checkbox发生了变化后才将此值传给后台
+              tempData.checklist = vm.checklist;
+            }
+            groupUpdate(tempData).then(res => {
+              vm.updateLoading = false;
+              vm.dialogFormVisible = false;
+              if(res.iRet === 0) {
+                vm.getGroupList();
+                vm.$message({
+                  message: '更新成功！',
+                  type: 'success'
+                })
+                this.reset();
+              } else {
+                vm.$message({
+                  message: '系统出错！',
+                  type: 'error'
+                });
+                this.reset();
+              }
+            })
+          }
+        })
+      },
+      reset() {
+        this.dialogFormVisible = false;
+        this.dialogDeleteVisible = false;
+        this.appInGroup = {};
+        this.checklistTemp = [];
+        this.checklist = [];
+        this.appList = [];
+        this.temp = {
+          id: undefined,
+          name: '',
+          order: '',
+          des: '',
+          array: [],
+        };
+      },
+      cancel() {
+        this.reset();
+      }
     }
   }
 
