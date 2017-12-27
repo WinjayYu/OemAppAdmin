@@ -62,8 +62,8 @@
       </template>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定c</el-button>
-        <el-button v-else type="primary" @click="updateData">确 定u</el-button>
+        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定</el-button>
+        <el-button v-else type="primary" @click="updateData">确 定</el-button>
       </div>
     </el-dialog>
     <el-dialog :title="statusMap[statusFlag]" :visible.sync="dialogDeleteVisible" v-loading.body="deleteLoading" size="tiny">
@@ -284,7 +284,7 @@
         let vm = this;
         const el = document.querySelectorAll('tbody')[0];
         this.sortable = Sortable.create(el,{
-          animation: 500,
+          animation: 100,
           dragClass: '.drag',
           onStart: evt => {
             vm.dragLoading = true;

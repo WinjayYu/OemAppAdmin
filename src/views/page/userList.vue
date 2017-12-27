@@ -10,15 +10,17 @@
       <el-table-column prop="registerTime" align="center" label="注册时间" ></el-table-column>
       <el-table-column prop="updateTime" align="center" label="更新时间" ></el-table-column>
       <el-table-column prop="expiryTime" align="center" label="过期时间" ></el-table-column>
-      <el-table-column align="center" label="状态" width="100px">
+      <el-table-column align="center" label="状态" width="150px">
         <template scope="scope">
-          <el-button :type="scope.row.status === 1 ? 'info' : 'danger'" size="mini">{{ scope.row.status | statusFilter }}</el-button>
+          <span class="state" :class="scope.row.status === 0 ? 's-danger' : ''">{{ scope.row.status | statusFilter }}</span>
+          <span class="state" :class="scope.row.status === 0 ? 's-danger' : ''">{{ scope.row.expiryTime | expiryTimeFilter }}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" width="220px">
         <template scope="scope">
           <el-button type="primary" size="small" @click="handleUpdate(scope.row)">编辑</el-button>
-          <el-button type="primary" size="small" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="scope.row.status === 1" type="danger" size="small" @click="handleDelete(scope.row, 0)">删除</el-button>
+          <el-button v-else type="warning" size="small" @click="handleDelete(scope.row, 1)">恢复</el-button>
         </template>
       </el-table-column>
 
@@ -34,14 +36,22 @@
         <el-form-item label="过期时间" prop="expiryTime">
           <el-input type="date" v-model="temp.expiryTime"></el-input>
         </el-form-item>
+        <el-form-item label="组:" prop="">
+          <template>
+            <el-checkbox-group v-model="checklist">
+              <el-checkbox v-for="item in groupInUser" v-if="item.flag" :label="item.id" :key="item.id">{{item.name}}</el-checkbox>
+              <el-checkbox v-else :label="item.id" :key="item.id">{{item.name}}</el-checkbox>
+            </el-checkbox-group>
+          </template>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定c</el-button>
-        <el-button v-else type="primary" @click="updateData">确 定u</el-button>
+        <el-button @click="cancel">取 消</el-button>
+        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定</el-button>
+        <el-button v-else type="primary" @click="updateData">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="删除" :visible.sync="dialogDeleteVisible" v-loading.body="deleteLoading" size="tiny">
+    <el-dialog :title="statusMap[state]" :visible.sync="dialogDeleteVisible" v-loading.body="deleteLoading" size="tiny">
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogDeleteVisible = false">取 消</el-button>
         <el-button type="primary" @click="deleteData">确 定</el-button>
@@ -67,8 +77,14 @@ import { userInsert, userDelete } from '@/api/user';
           update: '编辑',
           create: '创建'
         },
+        statusMap: ['删除', '恢复'],
         dialogFormVisible: false,
         dialogDeleteVisible: false,
+        state: -99,
+        checklist: [],
+        groupList: [],
+        groupInUser: [],
+        checklistTemp: [],
         temp: {
           id: undefined,
           phone: 0,
@@ -87,9 +103,18 @@ import { userInsert, userDelete } from '@/api/user';
     filters: {
       statusFilter: (status) => {
         return {
-          '-1': '过期',
+          '0': '已删除',
           '1': '正常'
         }[status]
+      },
+      expiryTimeFilter: (expiryTime) => {
+        var now = moment().format('YYYYMMDD');
+        expiryTime = moment(expiryTime, 'YYYY-MM-DD').format('YYYYMMDD');
+        if (expiryTime - now < 0) {
+          return '已过期'
+        } else {
+          return '';
+        }
       }
     },
     created() {
@@ -103,9 +128,33 @@ import { userInsert, userDelete } from '@/api/user';
           v.expiryTime = moment(v.expiryTime, 'YYYYMMDD').format('YYYY-MM-DD');
           return v;
         });
-      }
+      },
     },
     methods: {
+      getGroupList() {
+        let vm = this;
+        this.$store.dispatch('getGroupList').then(res => {
+          if(!res) {
+            vm.$message({
+              message: '获取组列表出错！',
+              type: 'error'
+            })
+          } else {
+            vm.groupList = res;
+            if(vm.temp.array) {
+              vm.groupInUser = vm.temp.array.map(v => {
+                v.flag = 1;
+                v.id = parseInt(v.id);
+                vm.checklist.push(v.id);
+                return v;
+              });
+            }
+            vm.checklistTemp = [...vm.checklist];
+
+            vm.groupInUser = _.unionBy(vm.groupInUser, vm.groupList, 'id');
+          }
+        })
+      },
       getUserList() {
         this.listLoading = true;
         this.$store.dispatch('getUserList').then((res)  => {
@@ -118,6 +167,7 @@ import { userInsert, userDelete } from '@/api/user';
         this.temp.updateTime = new Date(this.temp.updateTime);
         this.dialogStatus = 'update';
         this.dialogFormVisible = true;
+        this.getGroupList();
       },
       createData() {
         let vm = this;
@@ -152,9 +202,15 @@ import { userInsert, userDelete } from '@/api/user';
             const tempData = {...vm.temp};
             tempData.updateTime = Math.floor(tempData.updateTime / 1000);
             tempData.expiryTime = tempData.expiryTime.replace(/-/g, '');
+            let equTemp = vm.checklistTemp.sort((a,b) => a-b).toString();
+            let equ = vm.checklist.sort((a,b) => a-b).toString();
+            if(equTemp !== equ) {    // 只有当checkbox发生了变化后才将此值传给后台
+              tempData.checklist = vm.checklist;
+            }
             vm.$store.dispatch('userUpdate', tempData).then(res => {
               vm.updateLoading = false;
               vm.dialogFormVisible = false;
+              vm.reset();
               if(res.iRet === 0) {
                 vm.getUserList();
                 vm.$message({
@@ -188,13 +244,15 @@ import { userInsert, userDelete } from '@/api/user';
         this.dialogStatus = 'create'
         this.dialogFormVisible = true;
       },
-      handleDelete(row) {
+      handleDelete(row, state) {
+        this.state = state;
         this.temp = {...row};
         this.dialogDeleteVisible = true;
       },
       deleteData() {
         let vm = this;
         vm.deleteLoading = true;
+        vm.temp.state = vm.state;
         userDelete(vm.temp).then(res => {
           vm.deleteLoading = false;
           vm.dialogDeleteVisible = false;
@@ -211,6 +269,24 @@ import { userInsert, userDelete } from '@/api/user';
             })
           }
         })
+      },
+      reset() {
+        this.dialogFormVisible = false;
+        this.dialogDeleteVisible = false;
+        this.checklistTemp = [];
+        this.checklist = [];
+        this.groupInUser = [];
+        this.temp = {
+          id: undefined,
+          phone: 0,
+          des: '',
+          registerTime: 0,
+          updateTime: new Date(),
+          expiryTime: 0,
+        };
+      },
+      cancel() {
+        this.reset();
       }
     }
   }

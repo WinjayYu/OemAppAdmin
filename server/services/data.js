@@ -110,8 +110,43 @@ const appStatusSer = async (item) => {
   }
 };
 
-const userList = async () => {
-  const res = await executeQuery('SELECT a.id, a.phone, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status FROM `t_user` a where status <> 0');
+const userList = async (uid) => {
+
+  // let user_info = query('select * from user where uid = ?');
+  // let user_group[] = query('select * from user_group ug join group g on ug.gid = g.gid where ug.uid = ?')
+  // return {user_info, user_group};
+  let res = await executeQuery(
+`SELECT
+	a.id, a.phone, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status , d.array
+FROM
+	t_user a
+LEFT JOIN (
+	SELECT
+		ug.user_id,
+		ug.group_id,
+CONCAT(
+			'[',
+			GROUP_CONCAT(
+				'{',
+				CONCAT('"name":"', g.name, '"'),
+				CONCAT(',"id":"', g.id, '"'),
+				'}'
+			),
+			']'
+		) AS array
+	FROM
+		t_user_group ug
+	LEFT JOIN t_group g ON ug.group_id = g.id group by ug.user_id
+) d on a.id = d.user_id`);
+
+  res = res.map((item) => {
+    if(!item.array) {
+      item.array = item.array === null ? '' : item.array;
+    } else {
+      item.array = JSON.parse(item.array);
+    }
+    return item;
+  });
   return res;
 };
 
@@ -163,6 +198,13 @@ const userUpdate = async (item) => {
     WHERE
     id = ${item.id}`
   );
+console.log(item)
+  if(item.hasOwnProperty('checklist')) {
+    await executeQuery(`DELETE FROM t_user_group WHERE user_id = ${item.id}`);
+    for(let i = 0; i < item.checklist.length; i++ ) {
+      await executeQuery(`INSERT INTO t_user_group (user_id, group_id) VALUES (${item.id}, ${item.checklist[i]})`)
+    }
+  }
 
   if(res) {
     return {iRet: 0, res};
@@ -198,7 +240,7 @@ const userInsert = async (item) => {
 //删除用户
 const userDeleteSer = async (item) => {
   let res = await executeQuery(
-    `UPDATE t_user SET status = 0 WHERE id = ${item.id}`
+    `UPDATE t_user SET status = ${item.state} WHERE id = ${item.id}`
   );
   if(res) {
     return {iRet: 0}

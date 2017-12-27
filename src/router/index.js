@@ -91,7 +91,7 @@ export const asyncRouterMap = [
       title: 'group',
       icon: 'icon-drag'
     },
-    icon: 'el-icon-star-on',
+    icon: 'el-icon-time',
     noDropdown: true,
     children: [
       {path: 'groupList', component: GroupList, name: '组列表', meta: {title: '组列表'}}

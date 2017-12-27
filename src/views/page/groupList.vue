@@ -37,8 +37,8 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
-        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定c</el-button>
-        <el-button v-else type="primary" @click="updateData">确 定u</el-button>
+        <el-button v-if="dialogStatus=='create'" type="primary" @click="createData">确 定</el-button>
+        <el-button v-else type="primary" @click="updateData">确 定</el-button>
       </div>
     </el-dialog>
   </div>
