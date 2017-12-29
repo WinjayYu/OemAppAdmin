@@ -26,6 +26,8 @@ router.post('/app/appInsert', appCtrl.appInsert)
 router.post('/app/imgUpload', appCtrl.imgUpload)
 router.post('/group/groupUpdate', appCtrl.groupUpdate)
 router.post('/group/groupInsert', appCtrl.groupInsert)
+router.post('/group/groupInUser', appCtrl.groupInUser)
+router.post('/group/groupOrder', appCtrl.groupOrder)
 
 router.post('/result', appCtrl.result)
 

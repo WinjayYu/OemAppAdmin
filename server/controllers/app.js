@@ -79,6 +79,18 @@ const groupInsert = async (ctx) => {
   let item = ctx.request.body;
   let res = await dataSer.groupInsert(item);
   ctx.body = res;
+};
+
+const groupInUser = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.groupInUser(item);
+  ctx.body = res;
+};
+
+const groupOrder = async (ctx) => {
+  let item = ctx.request.body;
+  let res = await dataSer.groupOrder(item);
+  ctx.body = res;
 }
 
 export default {
@@ -95,5 +107,7 @@ export default {
   imgUpload,
   groupUpdate,
   result,
-  groupInsert
+  groupInsert,
+  groupInUser,
+  groupOrder
 }

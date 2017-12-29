@@ -15,17 +15,17 @@
       <el-table-column prop="url" label="url" align="center"></el-table-column>
       <el-table-column label="所在组" align="center">
         <template scope="scope">
-          <el-button type="text" v-for="item in scope.row.groups" :key="item.id">{{item.name}}</el-button>
+          <span class="state"  v-for="item in scope.row.groups" :key="item.id">{{item.name}}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" width="220px">
         <template scope="scope">
           <el-button type="primary" size="small" @click="handleUpdate(scope.row)">编辑</el-button>
-          <el-button v-if="scope.row.status" type="primary" size="small" @click="handleAppStatus(scope.row)">下架</el-button>
+          <el-button v-if="scope.row.status" type="danger" size="small" @click="handleAppStatus(scope.row)">下架</el-button>
           <el-button v-else type="primary" size="small" @click="handleAppStatus(scope.row)">上架</el-button>
         </template>
       </el-table-column>
-      <el-table-column align="center"  label="拖拽" width="100">
+      <el-table-column align="center"  label="拖拽排序" width="100">
         <template scope="scope">
           <img :src="drag" alt="drag" class="drag">
         </template>
@@ -43,7 +43,7 @@
           <el-input v-model="temp.des"></el-input>
         </el-form-item>
         <el-form-item label="icon" prop="icon">
-          <el-input v-model="temp.icon"></el-input>
+          <el-input v-model="temp.icon" :disabled="true"></el-input>
         </el-form-item>
 
       </el-form>
@@ -284,7 +284,7 @@
         let vm = this;
         const el = document.querySelectorAll('tbody')[0];
         this.sortable = Sortable.create(el,{
-          animation: 100,
+          animation: 300,
           dragClass: '.drag',
           onStart: evt => {
             vm.dragLoading = true;

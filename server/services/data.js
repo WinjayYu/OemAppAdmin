@@ -30,43 +30,11 @@ async function executeQuery(sql) {
 
 // app列表
 const appList = async () => {
-  let res = await executeQuery(`SELECT
-	a.*, d.groups, o.app_order as appOrder
-FROM
-	t_app a
-LEFT JOIN 
-	t_app_order o 
-on
-	a.id = o.app_id
-LEFT JOIN (
-	SELECT
-		ag.app_id,
-		ag.group_id,
-		CONCAT(
-			'[',
-		GROUP_CONCAT(
-			'{',
-			concat('"name":"', g.name, '"'),
-			concat(',"id":', g.id),
-			'}'
-			),
-			']'
-		) AS groups
-	FROM
-		t_app_group ag
-	LEFT JOIN t_group g ON ag.group_id = g.id
-	GROUP BY
-		ag.app_id
-) d ON a.id = d.app_id
-ORDER BY o.app_order ASC`);
-  res = res.map((item) => {
-    if(!item.groups) {
-      item.groups = item.groups === null ? '' : item.groups;
-    } else {
-      item.groups = JSON.parse(item.groups);
-    }
-    return item;
-  });
+  let res = await executeQuery(`select a.*, ao.app_order as appOrder from t_app a join t_app_order ao on a.id = ao.app_id order by ao.app_order asc`);
+
+  for(let i = 0; i < res.length; i++) {
+    res[i].groups = await executeQuery(`select g.id, g.name from t_group g where g.id in (select ag.group_id from t_app_group ag where ag.app_id = ${res[i].id})`)
+  }
   return res;
 };
 
@@ -110,83 +78,27 @@ const appStatusSer = async (item) => {
   }
 };
 
-const userList = async (uid) => {
+const userList = async () => {
+  const res = await executeQuery('SELECT a.id, a.phone, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status FROM `t_user` a');
 
-  // let user_info = query('select * from user where uid = ?');
-  // let user_group[] = query('select * from user_group ug join group g on ug.gid = g.gid where ug.uid = ?')
-  // return {user_info, user_group};
-  let res = await executeQuery(
-`SELECT
-	a.id, a.phone, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status , d.array
-FROM
-	t_user a
-LEFT JOIN (
-	SELECT
-		ug.user_id,
-		ug.group_id,
-CONCAT(
-			'[',
-			GROUP_CONCAT(
-				'{',
-				CONCAT('"name":"', g.name, '"'),
-				CONCAT(',"id":"', g.id, '"'),
-				'}'
-			),
-			']'
-		) AS array
-	FROM
-		t_user_group ug
-	LEFT JOIN t_group g ON ug.group_id = g.id group by ug.user_id
-) d on a.id = d.user_id`);
-
-  res = res.map((item) => {
-    if(!item.array) {
-      item.array = item.array === null ? '' : item.array;
-    } else {
-      item.array = JSON.parse(item.array);
-    }
-    return item;
-  });
   return res;
 };
 
+const groupInUser = async (item) => {
+  const res = await executeQuery(`select g.id, g.name from t_user_group ug join t_group g on ug.group_id = g.id where ug.user_id = ${item.id}`)
+  return res;
+}
+
 // 组列表
 const groupList = async () => {
-  let res = await executeQuery(`  SELECT
-	c.id, c.name, c.des, c.order, c.register_time AS registerTime, c.update_time AS updateTime, d.array
-FROM
-	t_group c
-LEFT JOIN (
-	SELECT
-		a.app_id,
-		a.group_id,
-		CONCAT(
-			'[',
-			GROUP_CONCAT(
-				'{',
-				CONCAT('"name":"', b.name, '"'),
-				CONCAT(',"icon":"', b.icon, '"'),
-				CONCAT(',"id":"', b.id, '"'),
-				'}'
-			),
-			']'
-		) AS array
-	FROM
-		t_app_group a
-	LEFT JOIN t_app b ON a.app_id = b.id
-	GROUP BY
-		a.group_id
-) d ON c.id = d.group_id`);
 
-  // res.array = JSON.parse(res.array);
-  res = res.map((item) => {
-    if(!item.array) {
-      item.array = item.array === null ? '' : item.array;
-    } else {
-      item.array = JSON.parse(item.array);
-    }
-    return item;
-  });
+  let res = await executeQuery(`select c.id, c.name, c.des, c.register_time as registerTime, c.update_time as updateTime 
+                                 from t_group c join t_group_order go on c.id = go.group_id order by go.group_order asc`);
+
+  for(let i = 0; i < res.length; i++) {
+    res[i].array = await executeQuery(`select a.id, a.name from t_app a where a.id in (select ag.app_id from t_app_group ag where ag.group_id = ${res[i].id} )`)
+  }
+
   return res;
 };
 
@@ -329,66 +241,19 @@ const groupUpdate = async (item) => {
 };
 
 const result = async (phone) => {
-  let sql =
-`SELECT
-	    t1.id,
-	    t1.name,
-	    t1.des,
-	    t2.app
-FROM
-	(
-		SELECT
-			g.*, t.*
-		FROM
-			t_group g
-		JOIN (
-			SELECT
-				*
-			FROM
-				t_user_group
-			WHERE
-				user_id = (
-					SELECT
-						id
-					FROM
-						t_user
-					WHERE
-						phone = '${phone}'
-				)
-		) t ON g.id = t.group_id
-	) t1
-JOIN (
-	SELECT
-		ag.*, CONCAT(
-			'[',
-			GROUP_CONCAT(
-				'{',
-				CONCAT('"id":', a.id),
-				',',
-				CONCAT('"name":"', a.NAME, '"'),
-				',',
-				CONCAT('"icon":"', a.icon, '"'),
-				',',
-				CONCAT('"url":"', a.url, '"'),
-				'}'
-			),
-			']'
-		) AS app
-	FROM
-		t_app_group ag
-	JOIN t_app a ON ag.app_id = a.id
-	GROUP BY
-		ag.group_id
-) t2 ON t1.id = t2.group_id`;
+  try {
+    let group = await executeQuery(`select k.* from (select g.id, g.name, g.des from t_group g join (select * from t_user_group  where user_id = (
+                            select id from t_user where phone = '${phone}')) t on g.id = t.group_id) k
+                            left join t_group_order go on k.id = go.group_id order by go.group_order asc`);
 
-  let res = await executeQuery(sql);
-  if(res) {
-    res.forEach(v => {
-      v.app = JSON.parse(v.app);
-    });
-    return { iRet: 0, message: 'ok', groups: res }
-  } else {
-    return { iRet: -1,  }
+    for(let i = 0; i < group.length; i++) {
+      group[i].apps = await executeQuery(`select t.* from (select a.id, a.name, a.url, a.icon from t_app a where a.id in (select ag.app_id from t_app_group ag where ag.group_id = ${group[i].id}) 
+                              ) t left join t_app_order ao on t.id = ao.app_id order by ao.app_id asc`);
+    }
+
+    return { iRet: 0, message: 'ok', group };
+  } catch (e) {
+    return { iRet: -1, message: e };
   }
 };
 
@@ -415,6 +280,16 @@ console.log('maxOrder', maxOrder[0].groupOrder);
   } else {
     return { iRet: -1 }
   }
+};
+
+const groupOrder = async (item) => {
+  let res;
+  for(let i = 0; i < item.length; i++) {
+    res = await executeQuery(
+      `UPDATE t_group_order SET group_order = ${i + 1} WHERE group_id = ${item[i].id}`
+    );
+  }
+  return {iRet: 0}
 }
 
 export default {
@@ -431,6 +306,8 @@ export default {
   imgUpload,
   groupUpdate,
   result,
-  groupInsert
+  groupInsert,
+  groupInUser,
+  groupOrder
 }
 

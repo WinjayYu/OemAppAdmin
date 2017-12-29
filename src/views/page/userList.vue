@@ -12,8 +12,9 @@
       <el-table-column prop="expiryTime" align="center" label="过期时间" ></el-table-column>
       <el-table-column align="center" label="状态" width="150px">
         <template scope="scope">
-          <span class="state" :class="scope.row.status === 0 ? 's-danger' : ''">{{ scope.row.status | statusFilter }}</span>
-          <span class="state" :class="scope.row.status === 0 ? 's-danger' : ''">{{ scope.row.expiryTime | expiryTimeFilter }}</span>
+          <span class="state s-danger" v-if="!scope.row.status">{{ scope.row.status | statusFilter }}</span>
+          <span class="state s-info" v-if="handleExpiryTime(scope.row.expiryTime)">{{ scope.row.expiryTime | expiryTimeFilter }}</span>
+          <span class="state" v-if="scope.row.status  && !handleExpiryTime(scope.row.expiryTime)">正常</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" width="220px">
@@ -65,6 +66,7 @@ import { mapState } from 'vuex';
 import _ from 'lodash';
 import moment from 'moment';
 import { userInsert, userDelete } from '@/api/user';
+import { groupInUser } from '@/api/groupManage';
   export default {
     name: 'inlineEditTable',
     data() {
@@ -104,7 +106,7 @@ import { userInsert, userDelete } from '@/api/user';
       statusFilter: (status) => {
         return {
           '0': '已删除',
-          '1': '正常'
+          '1': ''
         }[status]
       },
       expiryTimeFilter: (expiryTime) => {
@@ -113,7 +115,7 @@ import { userInsert, userDelete } from '@/api/user';
         if (expiryTime - now < 0) {
           return '已过期'
         } else {
-          return '';
+          return 'false';
         }
       }
     },
@@ -131,29 +133,36 @@ import { userInsert, userDelete } from '@/api/user';
       },
     },
     methods: {
+      handleExpiryTime(time) {
+        var now = moment().format('YYYYMMDD');
+        time = moment(time, 'YYYY-MM-DD').format('YYYYMMDD');
+        if (time - now < 0) {
+          return true;
+        } else {
+          return false;
+        }
+      },
+      handleStatus(status) {
+
+      },
       getGroupList() {
         let vm = this;
-        this.$store.dispatch('getGroupList').then(res => {
-          if(!res) {
-            vm.$message({
-              message: '获取组列表出错！',
-              type: 'error'
-            })
-          } else {
+        vm.groupList = vm.$store.state.groupManage.groupList;
+        if(vm.groupList.length === 0) {
+          this.$store.dispatch('getGroupList').then(res => {
             vm.groupList = res;
-            if(vm.temp.array) {
-              vm.groupInUser = vm.temp.array.map(v => {
-                v.flag = 1;
-                v.id = parseInt(v.id);
-                vm.checklist.push(v.id);
-                return v;
-              });
-            }
-            vm.checklistTemp = [...vm.checklist];
+          })
+        }
+        if(vm.groupInUser) {
+          vm.groupInUser.map(v => {
+            v.flag = 1;
+            vm.checklist.push(v.id);
+            return v;
+          });
+        }
+        vm.checklistTemp = [...vm.checklist];
 
-            vm.groupInUser = _.unionBy(vm.groupInUser, vm.groupList, 'id');
-          }
-        })
+        vm.groupInUser = _.unionBy(vm.groupInUser, vm.groupList, 'id');
       },
       getUserList() {
         this.listLoading = true;
@@ -163,18 +172,25 @@ import { userInsert, userDelete } from '@/api/user';
         })
       },
       handleUpdate(row) {
+        let vm = this;
         this.temp = {...row};
         this.temp.updateTime = new Date(this.temp.updateTime);
         this.dialogStatus = 'update';
         this.dialogFormVisible = true;
-        this.getGroupList();
+        groupInUser({ id: this.temp.id }).then((res) => {
+          vm.groupInUser = res;
+          this.getGroupList()
+        });
+        this.$nextTick(() => {
+          this.$refs['dataForm'].resetFields()
+        })
       },
       createData() {
         let vm = this;
-        vm.updateLoading = true;
-        vm.temp.expiryTime = vm.temp.expiryTime.replace(/-/g, '');
         this.$refs['dataForm'].validate((valid) => {
           if(valid) {
+            vm.updateLoading = true;
+            vm.temp.expiryTime = vm.temp.expiryTime.replace(/-/g, '');
             userInsert(vm.temp).then(res => {
               vm.updateLoading = false;
               vm.dialogFormVisible = false;
@@ -196,9 +212,9 @@ import { userInsert, userDelete } from '@/api/user';
       },
       updateData() {
         let vm = this;
-        vm.updateLoading = true;
         vm.$refs['dataForm'].validate((valid) => {
           if(valid) {
+            vm.updateLoading = true;
             const tempData = {...vm.temp};
             tempData.updateTime = Math.floor(tempData.updateTime / 1000);
             tempData.expiryTime = tempData.expiryTime.replace(/-/g, '');
@@ -224,8 +240,6 @@ import { userInsert, userDelete } from '@/api/user';
                 })
               }
             });
-          } else {
-            console.log('valid err');
           }
         })
       },
@@ -243,6 +257,10 @@ import { userInsert, userDelete } from '@/api/user';
         this.resetTemp();
         this.dialogStatus = 'create'
         this.dialogFormVisible = true;
+        this.$nextTick(() => {
+          console.log(this.$refs['dataForm']);
+          this.$refs['dataForm'].resetFields()
+        })
       },
       handleDelete(row, state) {
         this.state = state;
@@ -259,12 +277,12 @@ import { userInsert, userDelete } from '@/api/user';
           if(res.iRet === 0) {
             vm.getUserList();
             vm.$message({
-              message: '删除成功！',
+              message: '操作成功！',
               type: 'success'
             })
           } else {
             vm.$message({
-              message: '删除失败！',
+              message: '操作失败！',
               type: 'error'
             })
           }

@@ -9,12 +9,17 @@
       <el-table-column prop="des" align="center" label="描述"></el-table-column>
       <el-table-column label="app" align="center">
         <template scope="scope">
-          <el-button type="text" v-for="item in scope.row.array" :key="item.id">{{item.name}}</el-button>
+          <span class="state" v-for="item in scope.row.array" :key="item.id">{{item.name}}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" width="220px">
         <template scope="scope">
           <el-button type="primary" size="small" @click="handleUpdate(scope.row)">编辑</el-button>
+        </template>
+      </el-table-column>
+      <el-table-column align="center"  label="拖拽排序" width="100">
+        <template scope="scope">
+          <img :src="drag" alt="drag" class="drag">
         </template>
       </el-table-column>
     </el-table>
@@ -46,14 +51,20 @@
 
 <script>
   import _ from 'lodash';
-  import { groupUpdate, groupInsert } from '@/api/groupManage'
+  import { groupUpdate, groupInsert, groupOrder } from '@/api/groupManage';
+  import Sortable from 'sortablejs';
+  import drag from '@/assets/images/drag.png';
+
   export default {
     data() {
       return {
+        drag,
         listLoading: false,
         dialogStatus: false,
         dialogFormVisible: false,
         updateLoading: false,
+        dragLoading: false,
+        dragVisible: false,
         textMap: {
           update: '编辑',
           create: '创建'
@@ -61,7 +72,6 @@
         temp: {
           id: undefined,
           name: '',
-          order: '',
           des: '',
           array: [],
         },
@@ -69,6 +79,7 @@
         checklistTemp: [],  // 检验checkList有没有发生变化
         appInGroup: [],
         appList: [],
+        newList: [],
         rules: {
           name: [{required: true, message: '必填项', trigger: 'blur'}],
           des: [{required: true, message: '必填项', trigger: 'blur'}],
@@ -83,13 +94,21 @@
     created() {
       this.getGroupList();
     },
+    mounted(){
+      this.setSort();
+    },
     methods: {
       getGroupList() {
         let vm = this;
         this.listLoading = true;
         this.$store.dispatch('getGroupList').then(res => {
           vm.listLoading = false;
-        })
+          vm.olderList = vm.list.map(v => {
+            return { order: v.groupOrder, id: v.id }
+          });
+          vm.newList = vm.olderList.slice();
+        });
+
       },
       handleUpdate(row) {
         console.log(row);
@@ -194,15 +213,40 @@
         this.temp = {
           id: undefined,
           name: '',
-          order: '',
           des: '',
           array: [],
         };
       },
       cancel() {
         this.reset();
-      }
-    }
+      },
+      setSort() {
+        let vm = this;
+        const el = document.querySelectorAll('tbody')[0];
+        this.sortable = Sortable.create(el,{
+          animation: 300,
+          dragClass: '.drag',
+          onStart: evt => {
+            vm.dragLoading = true;
+            vm.dragVisible = true;
+          },
+          onEnd: evt => {
+            const tempIndex = vm.newList.splice(evt.oldIndex, 1)[0];
+            vm.newList.splice(evt.newIndex, 0, tempIndex);
+console.log(vm.newList)
+            groupOrder(vm.newList).then((res) =>{
+              if(res.iRet === 0) {
+                vm.dragLoading = false;
+                vm.dragVisible = false;
+//                vm.getAppList();
+              }
+            });
+
+          }
+        })
+      },
+    },
+
   }
 
 </script>

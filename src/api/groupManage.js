@@ -14,10 +14,20 @@ const groupUpdate = (data) => {
 
 const groupInsert = (data) => {
   return yFetch('/group/groupInsert', 'POST', data);
-}
+};
+
+const groupInUser = (data) => {
+  return yFetch('/group/groupInUser', 'POST', data);
+};
+
+const groupOrder = (data) => {
+  return yFetch('/group/groupOrder', 'POST', data);
+};
 
 export {
   groupList,
   groupUpdate,
-  groupInsert
+  groupInsert,
+  groupInUser,
+  groupOrder
 }
