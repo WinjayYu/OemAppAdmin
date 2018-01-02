@@ -31,7 +31,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" v-loading.body="updateLoading" size="tiny">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" v-loading.body="updateLoading" size="tiny" :show-close=false>
       <el-form :rules="rules" ref="dataForm" :model="temp">
         <el-form-item label="名称" prop="name">
           <el-input v-model="temp.name"></el-input>
@@ -66,7 +66,7 @@
         <el-button v-else type="primary" @click="updateData">确 定</el-button>
       </div>
     </el-dialog>
-    <el-dialog :title="statusMap[statusFlag]" :visible.sync="dialogDeleteVisible" v-loading.body="deleteLoading" size="tiny">
+    <el-dialog :title="statusMap[statusFlag]" :visible.sync="dialogDeleteVisible" v-loading.body="deleteLoading" size="tiny" :show-close=false>
       <span slot="footer" class="dialog-footer">
         <el-button @click="cancel">取 消</el-button>
         <el-button type="primary" @click="setAppStatus">确 定</el-button>
@@ -183,17 +183,29 @@
           }
         });
       },
-      handleCreate(row) {
+      handleCreate() {
+        let vm = this;
         this.resetTemp();
         this.dialogStatus = 'create';
         this.dialogFormVisible = true;
+        vm.checklist = [];
+        vm.checklistTemp = [];
+        this.$store.dispatch('getGroupList').then(res => {
+          if(!res) {
+            vm.$message({
+              message: '获取组列表出错！',
+              type: 'error'
+            })
+          } else {
+              vm.appInGroup = vm.groupList;
+          }
+        });
       },
       updateData() {
         let vm = this;
-
-        vm.updateLoading = true;
         vm.$refs['dataForm'].validate(valid => {
           if(valid) {
+            vm.updateLoading = true;
             const tempData = {...vm.temp};
             let equTemp = vm.checklistTemp.sort((a,b) => a-b).toString();
             let equ = vm.checklist.sort((a,b) => a-b).toString();
@@ -221,9 +233,9 @@
       },
       createData() {
         let vm = this;
-        vm.updateLoading = true;
         this.$refs['dataForm'].validate(valid => {
           if(valid) {
+            vm.updateLoading = true;
             appInsert(vm.temp).then((res) => {
               vm.updateLoading = false;
               vm.dialogFormVisible = false;

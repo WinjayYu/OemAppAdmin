@@ -23,7 +23,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" v-loading.body="updateLoading" size="tiny">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" v-loading.body="updateLoading" size="tiny" :show-close=false>
       <el-form :rules="rules" ref="dataForm" :model="temp">
         <el-form-item label="名称" prop="name">
           <el-input v-model="temp.name"></el-input>
@@ -149,9 +149,9 @@
       },
       createData () {
         let vm = this;
-        vm.updateLoading = true;
         this.$refs['dataForm'].validate((valid) => {
           if(valid) {
+            vm.updateLoading = true;
             groupInsert(vm.temp).then((res) => {
               vm.updateLoading = false;
               vm.dialogFormVisible = false;

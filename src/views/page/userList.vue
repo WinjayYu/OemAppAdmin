@@ -26,7 +26,7 @@
       </el-table-column>
 
     </el-table>
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" v-loading.body="updateLoading" size="tiny">
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible" v-loading.body="updateLoading" size="tiny" :show-close=false>
       <el-form :rules="rules" ref="dataForm" :model="temp" label-width="100px"  style='width: 400px;'>
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="temp.phone"></el-input>
@@ -151,18 +151,26 @@ import { groupInUser } from '@/api/groupManage';
         if(vm.groupList.length === 0) {
           this.$store.dispatch('getGroupList').then(res => {
             vm.groupList = res;
+            vm.calGroupInUser();
           })
+        } else {
+          vm.calGroupInUser();
         }
+      },
+      calGroupInUser() {
+        let vm = this;
         if(vm.groupInUser) {
           vm.groupInUser.map(v => {
             v.flag = 1;
             vm.checklist.push(v.id);
             return v;
           });
+          vm.checklistTemp = [...vm.checklist];
+          vm.groupInUser = _.unionBy(vm.groupInUser, vm.groupList, 'id');
+        } else {
+          vm.checklistTemp = [];
+          vm.groupInUser = vm.groupList;
         }
-        vm.checklistTemp = [...vm.checklist];
-
-        vm.groupInUser = _.unionBy(vm.groupInUser, vm.groupList, 'id');
       },
       getUserList() {
         this.listLoading = true;
@@ -191,6 +199,9 @@ import { groupInUser } from '@/api/groupManage';
           if(valid) {
             vm.updateLoading = true;
             vm.temp.expiryTime = vm.temp.expiryTime.replace(/-/g, '');
+            if(vm.checklist.length !== 0) {
+              vm.temp.checklist = vm.checklist;
+            }
             userInsert(vm.temp).then(res => {
               vm.updateLoading = false;
               vm.dialogFormVisible = false;
@@ -199,7 +210,10 @@ import { groupInUser } from '@/api/groupManage';
                 vm.$message({
                   message: '添加成功！',
                   type: 'success'
-                })
+                });
+                this.$nextTick(() => {
+                  this.$refs['dataForm'].resetFields();
+                });
               } else {
                 vm.$message({
                   message: '系统出错！',
@@ -232,7 +246,10 @@ import { groupInUser } from '@/api/groupManage';
                 vm.$message({
                   message: '更新成功！',
                   type: 'success'
-                })
+                });
+                this.$nextTick(() => {
+                  this.$refs['dataForm'].resetFields();
+                });
               } else {
                 vm.$message({
                   message: '系统出错！',
@@ -257,10 +274,10 @@ import { groupInUser } from '@/api/groupManage';
         this.resetTemp();
         this.dialogStatus = 'create'
         this.dialogFormVisible = true;
+        this.getGroupList();
         this.$nextTick(() => {
-          console.log(this.$refs['dataForm']);
-          this.$refs['dataForm'].resetFields()
-        })
+          this.$refs['dataForm'].resetFields();
+        });
       },
       handleDelete(row, state) {
         this.state = state;
@@ -302,6 +319,9 @@ import { groupInUser } from '@/api/groupManage';
           updateTime: new Date(),
           expiryTime: 0,
         };
+        this.$nextTick(() => {
+          this.$refs['dataForm'].resetFields();
+        });
       },
       cancel() {
         this.reset();

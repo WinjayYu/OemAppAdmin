@@ -30,7 +30,7 @@ async function executeQuery(sql) {
 
 // app列表
 const appList = async () => {
-  let res = await executeQuery(`select a.*, ao.app_order as appOrder from t_app a join t_app_order ao on a.id = ao.app_id order by ao.app_order asc`);
+  let res = await executeQuery(`select a.*, ao.app_order as appOrder from t_app a left join t_app_order ao on a.id = ao.app_id order by ao.app_order asc`);
 
   for(let i = 0; i < res.length; i++) {
     res[i].groups = await executeQuery(`select g.id, g.name from t_group g where g.id in (select ag.group_id from t_app_group ag where ag.app_id = ${res[i].id})`)
@@ -41,7 +41,6 @@ const appList = async () => {
 // app更新
 const appUpdateSer = async (item) => {
   let updateTime = Math.floor(new Date() / 1000);
-  console.log('111', item);
   const res1 = await executeQuery(`
     UPDATE t_app
     SET name = '${item.name}',
@@ -93,7 +92,7 @@ const groupInUser = async (item) => {
 const groupList = async () => {
 
   let res = await executeQuery(`select c.id, c.name, c.des, c.register_time as registerTime, c.update_time as updateTime 
-                                 from t_group c join t_group_order go on c.id = go.group_id order by go.group_order asc`);
+                                 from t_group c left join t_group_order go on c.id = go.group_id order by go.group_order asc`);
 
   for(let i = 0; i < res.length; i++) {
     res[i].array = await executeQuery(`select a.id, a.name from t_app a where a.id in (select ag.app_id from t_app_group ag where ag.group_id = ${res[i].id} )`)
@@ -110,7 +109,6 @@ const userUpdate = async (item) => {
     WHERE
     id = ${item.id}`
   );
-console.log(item)
   if(item.hasOwnProperty('checklist')) {
     await executeQuery(`DELETE FROM t_user_group WHERE user_id = ${item.id}`);
     for(let i = 0; i < item.checklist.length; i++ ) {
@@ -127,6 +125,7 @@ console.log(item)
 
 // 添加用户
 const userInsert = async (item) => {
+console.log(item);
   let registerTime = Math.floor(new Date() / 1000);
   let updateTime = registerTime;
   let res = await executeQuery(
@@ -142,6 +141,11 @@ const userInsert = async (item) => {
           1
         )`
   );
+  if(item.hasOwnProperty('checklist')) {
+    for(let i = 0; i < item.checklist.length; i++ ) {
+      await executeQuery(`INSERT INTO t_user_group (user_id, group_id) VALUES (${res.insertId}, ${item.checklist[i]})`)
+    }
+  }
   if(res) {
     return {iRet: 0, res}
   } else {
@@ -172,8 +176,10 @@ const appOrderSer = async (item) => {
 };
 
 const appInsertSer = async (item) => {
+  let maxOrder = await executeQuery(`SELECT MAX(ao.app_order) AS appOrder FROM t_app_order ao`);
+
   let registerTime = getCurrentDate();
-  let res = executeQuery(
+  let insertApp = await executeQuery(
     `INSERT INTO t_app
      VALUES
 	    (
@@ -186,7 +192,9 @@ const appInsertSer = async (item) => {
 	    ${registerTime},
 	    ${registerTime}
 	    )`);
-  if(res) {
+
+  let insertOrder = await executeQuery(`insert into t_app_order values ( ${insertApp.insertId},  ${maxOrder[0].appOrder + 1} )`)
+  if(insertApp && insertOrder) {
     return { iRet: 0 }
   } else {
     return { iRet: -1 }
@@ -259,11 +267,10 @@ const result = async (phone) => {
 
 const groupInsert = async (item) => {
 
-  let maxOrder = await executeQuery(`SELECT MAX(g.order) AS groupOrder FROM t_group g`);
-console.log('maxOrder', maxOrder[0].groupOrder);
+  let maxOrder = await executeQuery(`SELECT MAX(go.group_order) AS groupOrder FROM t_group_order go`);
 
   let registerTime = getCurrentDate();
-  let res = executeQuery(
+  let insertGroup = await executeQuery(
     `INSERT INTO t_group
      VALUES
 	    (
@@ -271,11 +278,11 @@ console.log('maxOrder', maxOrder[0].groupOrder);
 	    '${item.name}',
 	    '${item.des}',
 	    1,
-	    '${maxOrder[0].groupOrder + 1}',
 	    ${registerTime},
 	    ${registerTime}
 	    )`);
-  if(res) {
+  let insertOrder = await executeQuery(`insert into t_group_order values ( ${insertGroup.insertId}, ${maxOrder[0].groupOrder + 1} )`)
+  if(insertGroup && insertOrder) {
     return { iRet: 0 }
   } else {
     return { iRet: -1 }
