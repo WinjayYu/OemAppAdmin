@@ -70,8 +70,8 @@ const groupUpdate = async (ctx) => {
 };
 
 const result = async (ctx)  => {
-  let { phone } = ctx.request.body;
-  let res = await dataSer.result(phone);
+  let { name } = ctx.request.body;
+  let res = await dataSer.result(name);
   ctx.body = res;
 };
 

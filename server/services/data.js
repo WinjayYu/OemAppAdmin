@@ -78,7 +78,7 @@ const appStatusSer = async (item) => {
 };
 
 const userList = async () => {
-  const res = await executeQuery('SELECT a.id, a.phone, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status FROM `t_user` a');
+  const res = await executeQuery('SELECT a.id, a.name, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status FROM `t_user` a');
 
   return res;
 };
@@ -105,7 +105,7 @@ const groupList = async () => {
 const userUpdate = async (item) => {
   let res = await executeQuery(
     `UPDATE t_user
-    SET phone = '${item.phone}', des = '${item.des}', update_time = '${item.updateTime}',  expiry_time = '${item.expiryTime}'
+    SET name = '${item.name}', des = '${item.des}', update_time = '${item.updateTime}',  expiry_time = '${item.expiryTime}'
     WHERE
     id = ${item.id}`
   );
@@ -129,11 +129,11 @@ console.log(item);
   let registerTime = Math.floor(new Date() / 1000);
   let updateTime = registerTime;
   let res = await executeQuery(
-    `INSERT INTO t_user
+    `INSERT INTO t_user (id, name, des, register_time, update_time, expiry_time, status)
       VALUES
         (
           NULL,
-          '${item.phone}',
+          '${item.name}',
           '${item.des}',
           '${registerTime}',
           '${updateTime}',
@@ -248,10 +248,10 @@ const groupUpdate = async (item) => {
   }
 };
 
-const result = async (phone) => {
+const result = async (name) => {
   try {
     let group = await executeQuery(`select k.* from (select g.id, g.name, g.des from t_group g join (select * from t_user_group  where user_id = (
-                            select id from t_user where phone = '${phone}')) t on g.id = t.group_id) k
+                            select id from t_user where name = '${name}')) t on g.id = t.group_id) k
                             left join t_group_order go on k.id = go.group_id order by go.group_order asc`);
 
     for(let i = 0; i < group.length; i++) {
