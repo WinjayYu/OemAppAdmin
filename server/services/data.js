@@ -30,7 +30,7 @@ async function executeQuery(sql) {
 
 // app列表
 const appList = async () => {
-  let res = await executeQuery(`select a.*, ao.app_order as appOrder from t_app a left join t_app_order ao on a.id = ao.app_id order by ao.app_order asc`);
+  let res = await executeQuery(`select a.*, a.app_order as appOrder from t_app a order by a.app_order asc`);
 
   for(let i = 0; i < res.length; i++) {
     res[i].groups = await executeQuery(`select g.id, g.name from t_group g where g.id in (select ag.group_id from t_app_group ag where ag.app_id = ${res[i].id})`)
@@ -92,10 +92,10 @@ const groupInUser = async (item) => {
 const groupList = async () => {
 
   let res = await executeQuery(`select c.id, c.name, c.des, c.register_time as registerTime, c.update_time as updateTime 
-                                 from t_group c left join t_group_order go on c.id = go.group_id order by go.group_order asc`);
+                                 from t_group c order by c.group_order asc`);
 
   for(let i = 0; i < res.length; i++) {
-    res[i].array = await executeQuery(`select a.id, a.name from t_app a where a.id in (select ag.app_id from t_app_group ag where ag.group_id = ${res[i].id} )`)
+    res[i].apps = await executeQuery(`select a.id, a.name, a.icon, a.url from t_app a where a.id in (select ag.app_id from t_app_group ag where ag.group_id = ${res[i].id} )`)
   }
 
   return res;
@@ -169,14 +169,14 @@ const appOrderSer = async (item) => {
   let res;
   for(let i = 0; i < item.length; i++) {
     res = await  executeQuery(
-      `UPDATE t_app_order SET app_order = ${i + 1} WHERE app_id = ${item[i].id}`
+      `UPDATE t_app SET app_order = ${i + 1} WHERE id = ${item[i].id}`
     );
   }
   return {iRet: 0}
 };
 
 const appInsertSer = async (item) => {
-  let maxOrder = await executeQuery(`SELECT MAX(ao.app_order) AS appOrder FROM t_app_order ao`);
+  let maxOrder = await executeQuery(`SELECT MAX(a.app_order) AS appOrder FROM t_app a`);
 
   let registerTime = getCurrentDate();
   let insertApp = await executeQuery(
@@ -190,11 +190,11 @@ const appInsertSer = async (item) => {
 	    '${item.icon}',
 	    1,
 	    ${registerTime},
-	    ${registerTime}
+	    ${registerTime},
+	    ${maxOrder[0].appOrder + 1}
 	    )`);
 
-  let insertOrder = await executeQuery(`insert into t_app_order values ( ${insertApp.insertId},  ${maxOrder[0].appOrder + 1} )`)
-  if(insertApp && insertOrder) {
+  if(insertApp) {
     return { iRet: 0 }
   } else {
     return { iRet: -1 }
@@ -267,7 +267,7 @@ const result = async (name) => {
 
 const groupInsert = async (item) => {
 
-  let maxOrder = await executeQuery(`SELECT MAX(go.group_order) AS groupOrder FROM t_group_order go`);
+  let maxOrder = await executeQuery(`SELECT MAX(g.group_order) AS groupOrder FROM t_group g`);
 
   let registerTime = getCurrentDate();
   let insertGroup = await executeQuery(
@@ -279,10 +279,10 @@ const groupInsert = async (item) => {
 	    '${item.des}',
 	    1,
 	    ${registerTime},
-	    ${registerTime}
+	    ${registerTime},
+	    ${maxOrder[0].groupOrder + 1}
 	    )`);
-  let insertOrder = await executeQuery(`insert into t_group_order values ( ${insertGroup.insertId}, ${maxOrder[0].groupOrder + 1} )`)
-  if(insertGroup && insertOrder) {
+  if(insertGroup) {
     return { iRet: 0 }
   } else {
     return { iRet: -1 }
@@ -293,11 +293,34 @@ const groupOrder = async (item) => {
   let res;
   for(let i = 0; i < item.length; i++) {
     res = await executeQuery(
-      `UPDATE t_group_order SET group_order = ${i + 1} WHERE group_id = ${item[i].id}`
+      `UPDATE t_group SET group_order = ${i + 1} WHERE id = ${item[i].id}`
     );
   }
   return {iRet: 0}
+};
+
+const allData = async () => {
+  let userGroup = {};
+  let groupApp = {};
+  try {
+    let users = await executeQuery('SELECT a.id, a.name, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status FROM t_user a where status <> 0 and expiry_time > CURDATE()');
+
+    for (let i = 0; i < users.length; i++) {
+      let name = users[i].name;
+      userGroup[name] = await groupInUser({id: users[i].id});
+    }
+
+    groupApp = await groupList();
+  } catch (e) {
+    logger.error.error(e);
+    console.log(e);
+    return '';
+  }
+  groupApp = {groupApp};
+  return {userGroup, groupApp };
 }
+
+
 
 export default {
   appList,
@@ -315,6 +338,7 @@ export default {
   result,
   groupInsert,
   groupInUser,
-  groupOrder
+  groupOrder,
+  allData
 }
 

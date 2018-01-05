@@ -1,4 +1,10 @@
 import dataSer from '../services/data'
+let LRU = require("lru-cache");
+let options = {
+  max: 2000,
+  maxAge: 1000 * 60
+}
+let cache = LRU(options);
 
 const appList = async (ctx) => {
   let res = await dataSer.appList();
@@ -69,12 +75,6 @@ const groupUpdate = async (ctx) => {
   ctx.body = res;
 };
 
-const result = async (ctx)  => {
-  let { name } = ctx.request.body;
-  let res = await dataSer.result(name);
-  ctx.body = res;
-};
-
 const groupInsert = async (ctx) => {
   let item = ctx.request.body;
   let res = await dataSer.groupInsert(item);
@@ -91,7 +91,40 @@ const groupOrder = async (ctx) => {
   let item = ctx.request.body;
   let res = await dataSer.groupOrder(item);
   ctx.body = res;
-}
+};
+
+const allData = async () => {
+  let { userGroup, groupApp } = await dataSer.allData();
+  if(userGroup && groupApp) {
+    cache.set("user", userGroup);
+    cache.set("group", groupApp);
+  }
+};
+
+const result = async (ctx)  => {
+  let res = {group: []};
+  let { name } = ctx.request.body;
+  let userJson = cache.get('user');
+  let groupJson = cache.get('group');
+
+  if(!userJson || !groupJson) {
+    ctx.body =  { iRet:-1, message:'system error' }
+    return;
+  }
+
+  let groupInUser = userJson[name];
+  if(!groupInUser) {
+    ctx.body =  { iRet:0, message:'ok', group:[] }
+    return;
+  }
+  groupInUser.forEach((v, i) => {
+    res.group.push(groupJson.groupApp[v.id]);
+  });
+  res.iRet = 0;
+  res.message = 'ok';
+
+  ctx.body = res;
+};
 
 export default {
   appList,
@@ -109,5 +142,6 @@ export default {
   result,
   groupInsert,
   groupInUser,
-  groupOrder
+  groupOrder,
+  allData
 }

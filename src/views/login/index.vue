@@ -47,8 +47,8 @@
         };
         return {
           loginForm: {
-            email: 'admin@upchina.com',
-            password: '111111'
+            email: '',
+            password: ''
           },
           loginRules: {
             email: [

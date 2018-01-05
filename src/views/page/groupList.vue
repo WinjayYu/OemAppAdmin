@@ -9,7 +9,7 @@
       <el-table-column prop="des" align="center" label="描述"></el-table-column>
       <el-table-column label="app" align="center">
         <template scope="scope">
-          <span class="state" v-for="item in scope.row.array" :key="item.id">{{item.name}}</span>
+          <span class="state" v-for="item in scope.row.apps" :key="item.id">{{item.name}}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" width="220px">
@@ -73,7 +73,7 @@
           id: undefined,
           name: '',
           des: '',
-          array: [],
+          apps: [],
         },
         checklist: [],   // checkBox列表 如：[2] 会选中id为2的group
         checklistTemp: [],  // 检验checkList有没有发生变化
@@ -133,8 +133,8 @@
             })
           } else {
             vm.appList = res;
-            if(vm.temp.array) {
-              vm.appInGroup = vm.temp.array.map(v => {
+            if(vm.temp.apps) {
+              vm.appInGroup = vm.temp.apps.map(v => {
                 v.flag = 1;
                 v.id = parseInt(v.id);
                 vm.checklist.push(v.id);
@@ -214,7 +214,7 @@
           id: undefined,
           name: '',
           des: '',
-          array: [],
+          apps: [],
         };
       },
       cancel() {

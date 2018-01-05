@@ -19,6 +19,9 @@ app.use(bodyparser());
 app.use(json());
 app.use(logger());
 
+require('./scheduler');
+
+
 app.use(async (ctx, next) => {
   const start = new Date();
   await next();
@@ -75,8 +78,11 @@ app.use(
   })
 );
 
-app.listen(4001, () => {
-  console.log('Koa is served at http://localhost:4001');
+const ip = process.env.HTTP_IP || '0.0.0.0';
+const port = process.env.HTTP_PORT || '4001';
+
+app.listen(port, ip, () => {
+  console.log('Koa is served at http://localhost:' + port);
 });
 
 export default app;
