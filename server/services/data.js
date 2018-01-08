@@ -5,6 +5,7 @@ const _ = require('lodash');
 const parse = require('await-busboy');
 const read = require('read-all-stream');
 const path = require('path');
+import cache from '../common/cache';
 
 var upFileUpload = require('@up/file-upload')({
   bucket: "upcdnfiles",
@@ -250,16 +251,26 @@ const groupUpdate = async (item) => {
 
 const result = async (name) => {
   try {
-    let group = await executeQuery(`select k.* from (select g.id, g.name, g.des from t_group g join (select * from t_user_group  where user_id = (
-                            select id from t_user where name = '${name}')) t on g.id = t.group_id) k
-                            left join t_group_order go on k.id = go.group_id order by go.group_order asc`);
-
-    for(let i = 0; i < group.length; i++) {
-      group[i].apps = await executeQuery(`select t.* from (select a.id, a.name, a.url, a.icon from t_app a where a.id in (select ag.app_id from t_app_group ag where ag.group_id = ${group[i].id}) 
-                              ) t left join t_app_order ao on t.id = ao.app_id order by ao.app_id asc`);
+    let group = [];
+    let temp = {};
+    let data = cache.get();
+    if(data) {
+      let userGroup = data.user[name];
+      if (!userGroup) {
+        return {iRet: 0, message: 'ok', group: []};
+      }
+      userGroup.forEach((v, i) => {
+        let groupApp = data.group[v.id];
+        temp.id = v.id;
+        temp.name = groupApp.name;
+        temp.des = groupApp.des;
+        temp.apps = groupApp.apps;
+        group.push(temp);
+      });
+      return { iRet: 0, message: 'ok', group };
+    } else {
+      return  { iRet: -1, message: '暂无数据' }
     }
-
-    return { iRet: 0, message: 'ok', group };
   } catch (e) {
     return { iRet: -1, message: e };
   }
@@ -300,24 +311,87 @@ const groupOrder = async (item) => {
 };
 
 const allData = async () => {
-  let userGroup = {};
-  let groupApp = {};
   try {
-    let users = await executeQuery('SELECT a.id, a.name, a.des, a.register_time as registerTime, a.update_time as updateTime, a.expiry_time as expiryTime, a.status FROM t_user a where status <> 0 and expiry_time > CURDATE()');
+    let userGroup = await executeQuery(`
+  SELECT
+	a.name,
+	CONCAT(
+		'[',
+		GROUP_CONCAT(
+			'{',
+			CONCAT('"id":', ug.group_id),
+			'}'
+		),
+		']'
+	) AS groups
+FROM
+	t_user a
+LEFT JOIN t_user_group ug ON a.id = ug.user_id
+WHERE
+	a. STATUS <> 0
+AND a.expiry_time > CURDATE()
+GROUP BY
+	a.id
+    `);
 
-    for (let i = 0; i < users.length; i++) {
-      let name = users[i].name;
-      userGroup[name] = await groupInUser({id: users[i].id});
+    let userGroupRes = {};
+    for(let i = 0; i < userGroup.length; i++) {
+      userGroup[i].groups = JSON.parse(userGroup[i].groups);
+      let name = userGroup[i].name;
+      userGroupRes[name] = userGroup[i].groups;
     }
 
-    groupApp = await groupList();
+    cache.set({ key: "user", data: userGroupRes });
+
+    let groupApp = await executeQuery(`
+    SELECT
+	t1.id,
+	t1.name,
+	t1.des,
+	CONCAT(
+		'[',
+		GROUP_CONCAT(
+			'{',
+			CONCAT('"id":', a.id),
+			CONCAT(',"name":"', a.name, '"'),
+			CONCAT(',"url":"', a.url, '"'),
+			CONCAT(',"icon":"', a.icon, '"'),
+			'}'
+		),
+		']'
+	) AS apps
+FROM
+	t_app a
+JOIN (
+	SELECT
+		g.id,
+		g.name,
+		g.des,
+		ag.app_id
+	FROM
+		t_group g
+	LEFT JOIN t_app_group ag ON g.id = ag.group_id
+) t1
+on
+	a.id = t1.app_id
+WHERE
+	a.status <> 0
+GROUP BY
+	t1.id
+    `) ;
+
+    let groupAppRes = {};
+    for(let i = 0; i < groupApp.length; i++) {
+      groupApp[i].apps = JSON.parse(groupApp[i].apps);
+      let id = groupApp[i].id;
+      groupAppRes[id] = {name: groupApp[i].name, des:groupApp[i].des, apps:groupApp[i].apps};
+    }
+
+    cache.set({ key: "group", data: groupAppRes });
   } catch (e) {
     logger.error.error(e);
-    console.log(e);
-    return '';
+    return null;
   }
-  groupApp = {groupApp};
-  return {userGroup, groupApp };
 }
 
 

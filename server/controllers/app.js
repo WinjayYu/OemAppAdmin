@@ -102,27 +102,8 @@ const allData = async () => {
 };
 
 const result = async (ctx)  => {
-  let res = {group: []};
   let { name } = ctx.request.body;
-  let userJson = cache.get('user');
-  let groupJson = cache.get('group');
-
-  if(!userJson || !groupJson) {
-    ctx.body =  { iRet:-1, message:'system error' }
-    return;
-  }
-
-  let groupInUser = userJson[name];
-  if(!groupInUser) {
-    ctx.body =  { iRet:0, message:'ok', group:[] }
-    return;
-  }
-  groupInUser.forEach((v, i) => {
-    res.group.push(groupJson.groupApp[v.id]);
-  });
-  res.iRet = 0;
-  res.message = 'ok';
-
+  let res = await dataSer.result(name);
   ctx.body = res;
 };
 

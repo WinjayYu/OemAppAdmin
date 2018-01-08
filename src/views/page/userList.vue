@@ -89,14 +89,14 @@ import { groupInUser } from '@/api/groupManage';
         checklistTemp: [],
         temp: {
           id: undefined,
-          name: 0,
+          name: '',
           des: '',
           registerTime: 0,
           updateTime: new Date(),
           expiryTime: 0,
         },
         rules: {
-          name: [{ required: true, message: '必填项', trigger: 'change' }],
+          name: [{ required: true, pattern:/^[a-zA-Z0-9_.-]*$/, message: '只能含有数字、字母、下划线、中划线、小数点', trigger: 'blur' }],
           des: [{ required: true, message: '必填项', trigger: 'blur' }],
           expiryTime: [{ required: true, message: '必填项', trigger: 'blur' }]
         }
@@ -260,7 +260,7 @@ import { groupInUser } from '@/api/groupManage';
       resetTemp() {
         this.temp = {
           id: undefined,
-          name: 0,
+          name: '',
           des: '',
           registerTime: new Date(),
           updateTime: new Date(),
@@ -307,7 +307,7 @@ import { groupInUser } from '@/api/groupManage';
         this.groupInUser = [];
         this.temp = {
           id: undefined,
-          name: 0,
+          name: '',
           des: '',
           registerTime: 0,
           updateTime: new Date(),
