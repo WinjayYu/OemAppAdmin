@@ -1,26 +1,43 @@
 /**
  * Created by winjayyu on 2018/1/8.
  */
-let cache = {};
 
-let set = function (option) {
-  switch (option.key) {
-    case "user":
-      cache.user = option.data;
-      break;
-    case "group":
-      cache.group = option.data;
-      break;
-    default:
-      new Error('cache error');
+import dataService from '../services/data';
+const logger = require('../common/logger');
+
+let _groups_of_user = {};
+let _group_info = {};
+
+const load = async () => {
+  let temp_groups_of_user;
+  let temp_group_info;
+  try {
+    temp_groups_of_user = await dataService.getGroupOfUser();
+    temp_group_info = await dataService.getGroupInfo();
+  } catch(err) {
+    logger.error.error(err);
+    return false;
   }
+  _groups_of_user = temp_groups_of_user;
+  _group_info = temp_group_info;
+
+  return true;
+}
+
+/**
+ * @param name username
+ */
+const get = name => {
+  let gids = _groups_of_user[name];
+  if(gids) {
+    return gids.map(v => {
+      return _group_info[v];
+    })
+  }
+  return null;
 };
 
-let get = function () {
-  return cache;
-};
-
-export default {
-  set,
+export default  {
+  load,
   get
 }

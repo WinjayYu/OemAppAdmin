@@ -2,14 +2,14 @@
 const CronJob = require("cron").CronJob;
 const logger = require('../common/logger');
 const TIME_ZONE = "Asia/Shanghai";
-import service from '../services/data';
+import cache from '../common/cache';
 
 try {
 	//每分钟执行一次
 	 let job = new CronJob('* * * * *', async () => {
         logger.data.info('cronjob start');
 			try{
-				await service.allData();
+				await cache.load();
 			} catch (ex){
 				logger.error.error("拉取数据出错！",ex);
 			}

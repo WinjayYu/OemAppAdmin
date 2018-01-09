@@ -251,27 +251,15 @@ const groupUpdate = async (item) => {
 
 const result = async (name) => {
   try {
-    let group = [];
-    let temp = {};
-    let data = cache.get();
+    let data = cache.get(name);
+console.log(JSON.stringify(data));
     if(data) {
-      let userGroup = data.user[name];
-      if (!userGroup) {
-        return {iRet: 0, message: 'ok', group: []};
-      }
-      userGroup.forEach((v, i) => {
-        let groupApp = data.group[v.id];
-        temp.id = v.id;
-        temp.name = groupApp.name;
-        temp.des = groupApp.des;
-        temp.apps = groupApp.apps;
-        group.push(temp);
-      });
-      return { iRet: 0, message: 'ok', group };
+      return { iRet: 0, message: 'ok', group: data };
     } else {
-      return  { iRet: -1, message: '暂无数据' }
+      return  { iRet: 0, message: 'ok', group: [] }
     }
   } catch (e) {
+console.log(e);
     return { iRet: -1, message: e };
   }
 };
@@ -392,9 +380,70 @@ GROUP BY
     logger.error.error(e);
     return null;
   }
-}
+};
 
+let getGroupOfUser = async () => {
+    let groupOfUser = await executeQuery(`
+      SELECT
+      a.name,
+        GROUP_CONCAT(ug.group_id) AS groups
+    FROM
+      t_user a
+    LEFT JOIN t_user_group ug ON a.id = ug.user_id
+    WHERE
+      a. STATUS <> 0
+    AND a.expiry_time > CURDATE()
+    GROUP BY
+      a.id
+        `);
 
+      let res = {};
+      groupOfUser.forEach((v, i) => {
+        let name = v.name;
+        res[name] = v.groups.split(',');
+      });
+
+      return res;
+    };
+
+let getGroupInfo = async () => {
+  let allApps = await executeQuery("SELECT a.id, a.name, a.url, a.icon from t_app a WHERE a.status <> 0");
+  let appsObj = {};
+  allApps.forEach(v => {
+    let id = v.id;
+    appsObj[id] = v;
+  });
+
+  let groupAppids = await executeQuery(`
+    SELECT
+      g.id,
+      g.name,
+      g.des,
+      GROUP_CONCAT(ag.app_id order by ag.app_id asc) AS apps
+    FROM
+      t_group g
+    LEFT JOIN t_app_group ag ON g.id = ag.group_id
+    GROUP BY
+      g.id
+  `);
+
+  let groupObj = {};
+  groupAppids.forEach(v => {
+    let id = v.id;
+    v.apps = v.apps.split(',');
+    groupObj[id] = _.cloneDeep(v);
+    groupObj[id].apps.length = 0;
+    if(v.apps.length !== 0) {
+      v.apps.forEach(appid => {
+        if(appsObj[appid]) {
+          groupObj[id].apps.push(appsObj[appid]);
+        }
+      })
+    }
+  });
+
+  return groupObj;
+};
 
 export default {
   appList,
@@ -413,6 +462,8 @@ export default {
   groupInsert,
   groupInUser,
   groupOrder,
-  allData
+  allData,
+  getGroupOfUser,
+  getGroupInfo
 }
 
