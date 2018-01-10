@@ -6,7 +6,7 @@ import cache from '../common/cache';
 
 try {
 	//每分钟执行一次
-	 let job = new CronJob('* * * * *', async () => {
+	 let job = new CronJob('0 * * * * *', async () => {
         logger.data.info('cronjob start');
 			try{
 				await cache.load();

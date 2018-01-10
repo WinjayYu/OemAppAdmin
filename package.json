@@ -18,6 +18,9 @@
     "release:package": "cd dist && tar -zcvf OemAppAdmin.tar.gz OemAppAdmin",
     "release": "npm-run-all clean build release:copy release:deps release:package"
   },
+  "nodeAgent": {
+    "main": "./index.js"
+  },
   "dependencies": {
     "@taf/taf-config-helper": "^1.0.5",
     "@taf/taf-logs": "^0.1.1",

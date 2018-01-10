@@ -126,7 +126,6 @@ const userUpdate = async (item) => {
 
 // 添加用户
 const userInsert = async (item) => {
-console.log(item);
   let registerTime = Math.floor(new Date() / 1000);
   let updateTime = registerTime;
   let res = await executeQuery(
@@ -252,15 +251,14 @@ const groupUpdate = async (item) => {
 const result = async (name) => {
   try {
     let data = cache.get(name);
-console.log(JSON.stringify(data));
     if(data) {
       return { iRet: 0, message: 'ok', group: data };
     } else {
       return  { iRet: 0, message: 'ok', group: [] }
     }
   } catch (e) {
-console.log(e);
-    return { iRet: -1, message: e };
+    logger.error.error(e);
+    return { iRet: -1, message: 'system error' };
   }
 };
 
@@ -298,98 +296,15 @@ const groupOrder = async (item) => {
   return {iRet: 0}
 };
 
-const allData = async () => {
-  try {
-    let userGroup = await executeQuery(`
-  SELECT
-	a.name,
-	CONCAT(
-		'[',
-		GROUP_CONCAT(
-			'{',
-			CONCAT('"id":', ug.group_id),
-			'}'
-		),
-		']'
-	) AS groups
-FROM
-	t_user a
-LEFT JOIN t_user_group ug ON a.id = ug.user_id
-WHERE
-	a. STATUS <> 0
-AND a.expiry_time > CURDATE()
-GROUP BY
-	a.id
-    `);
-
-    let userGroupRes = {};
-    for(let i = 0; i < userGroup.length; i++) {
-      userGroup[i].groups = JSON.parse(userGroup[i].groups);
-      let name = userGroup[i].name;
-      userGroupRes[name] = userGroup[i].groups;
-    }
-
-    cache.set({ key: "user", data: userGroupRes });
-
-    let groupApp = await executeQuery(`
-    SELECT
-	t1.id,
-	t1.name,
-	t1.des,
-	CONCAT(
-		'[',
-		GROUP_CONCAT(
-			'{',
-			CONCAT('"id":', a.id),
-			CONCAT(',"name":"', a.name, '"'),
-			CONCAT(',"url":"', a.url, '"'),
-			CONCAT(',"icon":"', a.icon, '"'),
-			'}'
-		),
-		']'
-	) AS apps
-FROM
-	t_app a
-JOIN (
-	SELECT
-		g.id,
-		g.name,
-		g.des,
-		ag.app_id
-	FROM
-		t_group g
-	LEFT JOIN t_app_group ag ON g.id = ag.group_id
-) t1
-on
-	a.id = t1.app_id
-WHERE
-	a.status <> 0
-GROUP BY
-	t1.id
-    `) ;
-
-    let groupAppRes = {};
-    for(let i = 0; i < groupApp.length; i++) {
-      groupApp[i].apps = JSON.parse(groupApp[i].apps);
-      let id = groupApp[i].id;
-      groupAppRes[id] = {name: groupApp[i].name, des:groupApp[i].des, apps:groupApp[i].apps};
-    }
-
-    cache.set({ key: "group", data: groupAppRes });
-  } catch (e) {
-    logger.error.error(e);
-    return null;
-  }
-};
-
 let getGroupOfUser = async () => {
     let groupOfUser = await executeQuery(`
       SELECT
       a.name,
-        GROUP_CONCAT(ug.group_id) AS groups
+        GROUP_CONCAT(ug.group_id order by g.group_order) AS groups
     FROM
       t_user a
-    LEFT JOIN t_user_group ug ON a.id = ug.user_id
+    JOIN t_user_group ug ON a.id = ug.user_id
+    JOIN t_group g on ug.group_id = g.id
     WHERE
       a. STATUS <> 0
     AND a.expiry_time > CURDATE()
@@ -399,19 +314,17 @@ let getGroupOfUser = async () => {
 
       let res = {};
       groupOfUser.forEach((v, i) => {
-        let name = v.name;
-        res[name] = v.groups.split(',');
+        res[v.name] = v.groups.split(',');
       });
 
-      return res;
+  return res;
     };
 
 let getGroupInfo = async () => {
-  let allApps = await executeQuery("SELECT a.id, a.name, a.url, a.icon from t_app a WHERE a.status <> 0");
+  let allApps = await executeQuery("SELECT a.id, a.name, a.url, a.icon, a.app_order from t_app a WHERE a.status <> 0");
   let appsObj = {};
   allApps.forEach(v => {
-    let id = v.id;
-    appsObj[id] = v;
+    appsObj[v.id] = v;
   });
 
   let groupAppids = await executeQuery(`
@@ -419,27 +332,23 @@ let getGroupInfo = async () => {
       g.id,
       g.name,
       g.des,
-      GROUP_CONCAT(ag.app_id order by ag.app_id asc) AS apps
+      GROUP_CONCAT(ag.app_id) AS apps
     FROM
       t_group g
-    LEFT JOIN t_app_group ag ON g.id = ag.group_id
+    JOIN t_app_group ag ON g.id = ag.group_id
     GROUP BY
       g.id
+    ORDER BY
+			g.group_order
   `);
 
   let groupObj = {};
   groupAppids.forEach(v => {
-    let id = v.id;
-    v.apps = v.apps.split(',');
-    groupObj[id] = _.cloneDeep(v);
-    groupObj[id].apps.length = 0;
-    if(v.apps.length !== 0) {
-      v.apps.forEach(appid => {
-        if(appsObj[appid]) {
-          groupObj[id].apps.push(appsObj[appid]);
-        }
-      })
-    }
+    groupObj[v.id] = v;
+    v.apps = v.apps.split(',').map(v => appsObj[v]).filter(v => v).sort(v => v.app_order);
+    v.apps.forEach(v => {
+      delete v.app_order;
+    })
   });
 
   return groupObj;
@@ -462,7 +371,6 @@ export default {
   groupInsert,
   groupInUser,
   groupOrder,
-  allData,
   getGroupOfUser,
   getGroupInfo
 }

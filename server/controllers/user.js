@@ -1,6 +1,8 @@
+const config = global.config;
+
 const userInfo = {
-  email: 'admin@upchina.com',
-  password: '111111'
+  email: config.adminAccount.email,
+  password: config.adminAccount.password
 };
 
 const postLogin = async function(ctx) {

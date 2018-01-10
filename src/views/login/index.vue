@@ -69,8 +69,12 @@
               this.$store.dispatch('Login', this.loginForm).then(() => {
                 this.loading = false;
                 this.$router.push({ path: '/' });
-              }).catch(() => {
+              }).catch((e) => {
                 this.loading = false;
+                this.$message({
+                  message: e,
+                  type: 'error'
+                })
               });
             } else {
               console.log('error submit!!');

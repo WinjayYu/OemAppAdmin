@@ -38,9 +38,13 @@ const user = {
       return new Promise((resolve, reject) => {
         postLogin(email, userInfo.password).then(response => {
           const data = response.data;
-          Cookies.set('Admin-Token', data.token);
-          commit('SET_TOKEN', data.token);
-          resolve();
+          if(data.success) {
+            Cookies.set('Admin-Token', data.token);
+            commit('SET_TOKEN', data.token, { expires: 2 });  // 有效期两天
+            resolve();
+          } else {
+            reject('密码错误！')
+          }
         }).catch(error => {
           reject(error);
         });
