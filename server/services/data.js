@@ -47,7 +47,8 @@ const appUpdateSer = async (item) => {
     SET name = '${item.name}',
      des = '${item.des}',
      update_time = '${updateTime}',
-     icon = '${item.icon}'
+     icon = '${item.icon}',
+     url = '${item.url}'
     WHERE
       id = ${item.id}`);
 
@@ -263,7 +264,8 @@ const result = async (name) => {
 };
 
 const groupInsert = async (item) => {
-
+  console.log(item);
+try {
   let maxOrder = await executeQuery(`SELECT MAX(g.group_order) AS groupOrder FROM t_group g`);
 
   let registerTime = getCurrentDate();
@@ -279,11 +281,20 @@ const groupInsert = async (item) => {
 	    ${registerTime},
 	    ${maxOrder[0].groupOrder + 1}
 	    )`);
-  if(insertGroup) {
-    return { iRet: 0 }
-  } else {
-    return { iRet: -1 }
+  if (item.hasOwnProperty('checklist')) {
+    for (let i = 0; i < item.checklist.length; i++) {
+      await executeQuery(`INSERT INTO t_app_group VALUES (${item.checklist[i]}, ${insertGroup.insertId})`)
+    }
   }
+  if (insertGroup) {
+    return {iRet: 0};
+  } else {
+    return {iRet: -1};
+  }
+}catch (e) {
+  logger.error.error(e);
+  return {iRet: -1};
+}
 };
 
 const groupOrder = async (item) => {
@@ -307,7 +318,7 @@ let getGroupOfUser = async () => {
     JOIN t_group g on ug.group_id = g.id
     WHERE
       a. STATUS <> 0
-    AND a.expiry_time > CURDATE()
+    AND a.expiry_time >= CURDATE()
     GROUP BY
       a.id
         `);
@@ -335,7 +346,7 @@ let getGroupInfo = async () => {
       GROUP_CONCAT(ag.app_id) AS apps
     FROM
       t_group g
-    JOIN t_app_group ag ON g.id = ag.group_id
+    LEFT JOIN t_app_group ag ON g.id = ag.group_id
     GROUP BY
       g.id
     ORDER BY
@@ -345,10 +356,16 @@ let getGroupInfo = async () => {
   let groupObj = {};
   groupAppids.forEach(v => {
     groupObj[v.id] = v;
-    v.apps = v.apps.split(',').map(v => appsObj[v]).filter(v => v).sort(v => v.app_order);
-    v.apps.forEach(v => {
-      delete v.app_order;
-    })
+    if(v.apps) {
+      v.apps = v.apps.split(',').map(v => appsObj[v]).filter(v => v).sort((a, b) => {
+        return a.app_order - b.app_order;
+      });
+      v.apps.forEach(v => {
+        delete v.app_order;
+      })
+    } else {
+      v.apps = [];
+    }
   });
 
   return groupObj;

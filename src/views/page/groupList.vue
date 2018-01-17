@@ -4,7 +4,7 @@
       <el-button class="filter-item" style="margin: 10px 0;" @click="handleCreate" type="primary" icon="el-icon-edit">添加组</el-button>
     </div>
     <el-table :data="list" v-loading.body="listLoading" border fit highlight-current-row style="width: 100%">
-      <el-table-column prop="id" align="center" label="ID" width="50px"></el-table-column>
+      <el-table-column prop="id" align="center" label="ID" width="80px"></el-table-column>
       <el-table-column prop="name" align="center" label="名称"></el-table-column>
       <el-table-column prop="des" align="center" label="描述"></el-table-column>
       <el-table-column label="app" align="center">
@@ -152,6 +152,9 @@
         this.$refs['dataForm'].validate((valid) => {
           if(valid) {
             vm.updateLoading = true;
+            if(vm.checklist.length !== 0 ) {
+              vm.temp.checklist =  vm.checklist;
+            }
             groupInsert(vm.temp).then((res) => {
               vm.updateLoading = false;
               vm.dialogFormVisible = false;
