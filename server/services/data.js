@@ -360,9 +360,9 @@ let getGroupInfo = async () => {
       v.apps = v.apps.split(',').map(v => appsObj[v]).filter(v => v).sort((a, b) => {
         return a.app_order - b.app_order;
       });
-      v.apps.forEach(v => {
-        delete v.app_order;
-      })
+      // v.apps.forEach(v => {
+      //   delete v.app_order;
+      // })
     } else {
       v.apps = [];
     }
